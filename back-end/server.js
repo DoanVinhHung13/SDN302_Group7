@@ -6,6 +6,8 @@ const cors = require("cors");
 const { initScheduler } = require("./src/config/scheduler");
 const http = require("http");
 const { initSocketServer } = require("./src/services/socketService");
+const passport = require("passport");
+require("./src/config/passport"); // load file config passport (GoogleStrategy)
 
 const app = express();
 dotenv.config(); // Move dotenv.config() before using process.env
@@ -15,6 +17,7 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
+app.use(passport.initialize());
 
 // Add request logging middleware
 app.use((req, res, next) => {

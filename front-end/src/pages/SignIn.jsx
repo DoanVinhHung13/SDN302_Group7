@@ -21,6 +21,16 @@ const EyeOffIcon = (props) => (
   </svg>
 );
 
+// 👉 Thêm icon Google
+const GoogleIcon = () => (
+  <svg className="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+    <path fill="#EA4335" d="M24 9.5c3.54 0 6.68 1.22 9.18 3.6l6.84-6.84C35.58 2.34 30.24 0 24 0 14.64 0 6.4 5.34 2.48 13.12l7.98 6.2C12.02 13.02 17.6 9.5 24 9.5z"/>
+    <path fill="#4285F4" d="M46.5 24.5c0-1.52-.14-3-.4-4.5H24v9h12.7c-.56 3-2.2 5.5-4.7 7.2l7.3 5.7C43.92 37.46 46.5 31.46 46.5 24.5z"/>
+    <path fill="#FBBC05" d="M10.46 28.88a14.54 14.54 0 010-9.76l-7.98-6.2C.9 16.14 0 20.02 0 24s.9 7.86 2.48 11.08l7.98-6.2z"/>
+    <path fill="#34A853" d="M24 48c6.48 0 11.92-2.14 15.9-5.84l-7.3-5.7c-2.04 1.38-4.68 2.2-8.6 2.2-6.4 0-11.98-3.52-14.54-8.62l-7.98 6.2C6.4 42.66 14.64 48 24 48z"/>
+  </svg>
+);
+
 const SignIn = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -33,12 +43,10 @@ const SignIn = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
-  // Handle input changes
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
   
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -49,7 +57,6 @@ const SignIn = () => {
         password: formData.password
       });
       
-      // Ensure we use accessToken consistently
       dispatch(setCredentials({
         user: response.user,
         token: response.accessToken || response.token
@@ -57,11 +64,10 @@ const SignIn = () => {
       
       toast.success('Login successful!');
       
-      // Redirect based on user role
       if (response.user?.role === 'admin') {
-        navigate('/admin'); // Admin users to admin overview
+        navigate('/admin');
       } else {
-        navigate('/'); // Regular users to home page
+        navigate('/');
       }
       
     } catch (error) {
@@ -69,6 +75,11 @@ const SignIn = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // 👉 Hàm login bằng Google
+  const handleGoogleLogin = () => {
+    window.location.href = `http://localhost:9999/api/auth/google`;
   };
 
   return (
@@ -161,6 +172,17 @@ const SignIn = () => {
               ) : (
                 'Sign In'
               )}
+            </button>
+          </div>
+
+          {/*  Thêm nút Login bằng Google */}
+          <div>
+            <button
+              type="button"
+              onClick={handleGoogleLogin}
+              className="w-full mt-3 flex items-center justify-center py-3 px-4 border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50 transition"
+            >
+              <GoogleIcon /> Sign in with Google
             </button>
           </div>
 

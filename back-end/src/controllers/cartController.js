@@ -59,10 +59,10 @@ const addToCart = async (req, res) => {
 const viewCart = async (req, res) => {
   try {
     const userId = req.user.id;
-    // Tìm giỏ hàng và populate thông tin sản phẩm
     const cart = await Cart.findOne({ userId }).populate('items.productId');
     if (!cart) {
-      return res.status(404).json({ message: 'Cart not found' });
+      // Trả về giỏ hàng rỗng thay vì 404
+      return res.status(200).json({ items: [] });
     }
     res.status(200).json(cart);
   } catch (error) {

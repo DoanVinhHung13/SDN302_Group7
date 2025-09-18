@@ -66,35 +66,38 @@ const SignUp = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (formData.password !== formData.confirmPassword) {
-      toast.error("Passwords do not match");
-      return;
-    }
+  e.preventDefault();
 
-    setIsLoading(true);
+  if (formData.password !== formData.confirmPassword) {
+    toast.error("Passwords do not match");
+    return;
+  }
 
-    try {
-      const response = await register({
-        username: formData?.username,
-        fullname: formData.fullname,
-        email: formData.email,
-        password: formData.password,
-      });
-      dispatch(
-        setCredentials({
-          user: response.user,
-          token: response.token,
-        })
-      );
-      toast.success("Registration successful!");
-      navigate("/signin"); // Redirect to sign in page after successful registration
-    } catch (error) {
-      toast.error(error.message || "Registration failed");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  setIsLoading(true);
+
+  try {
+    const response = await register({
+      username: formData.username,
+      fullname: formData.fullname,
+      email: formData.email,
+      password: formData.password,
+    });
+
+    // Không dispatch setCredentials ở đây vì chưa verify OTP
+    toast.success("Registration successful! Please verify your email.");
+
+    // Redirect sang OTPVerification kèm email
+    navigate("/verify-otp", { state: { email: formData.email } });
+
+  } catch (error) {
+    // Lấy message từ response hoặc error.message
+    const msg = error.response?.data?.message || error.message || "Registration failed";
+    toast.error(msg);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-50 to-indigo-50 py-12 px-4 sm:px-6 lg:px-8">

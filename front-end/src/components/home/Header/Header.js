@@ -7,6 +7,8 @@ import { MdKeyboardArrowDown } from "react-icons/md";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { logout } from "../../../features/auth/authSlice";
+import ebayLogo from "../../../assets/images/logo-ebay.jpg";
+import Image from "../../designLayouts/Image";
 import {
   resetUserInfo,
   setProducts,
@@ -381,9 +383,9 @@ const Header = () => {
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center">
-            <div className="text-3xl font-bold text-[#e53e3e] tracking-tight">
-              TUTHAITU
+          <Link to="/">
+            <div className="transform hover:scale-105 transition-transform duration-300">
+              <Image className="w-20 object-cover" imgSrc={ebayLogo} />
             </div>
           </Link>
 

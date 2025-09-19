@@ -335,12 +335,13 @@ const Header = () => {
                           My Reviews
                         </Link>
                         <Link
-                          to="/my-reviews"
+                          to="/profile"
                           onClick={() => setShowUser(false)}
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                         >
-                          My Reviews
+                          My Profile
                         </Link>
+
                         <div className="border-t border-gray-100 mt-2">
                           <button
                             onClick={handleLogout}

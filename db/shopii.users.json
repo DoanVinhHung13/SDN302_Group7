@@ -51,4 +51,162 @@
   "updatedAt": {
     "$date": "2025-07-24T06:26:46.325Z"
   }
+},
+{
+  "_id": {
+    "$oid": "68c50bf2275979c69b496a66"
+  },
+  "username": "ronaldo",
+  "fullname": "Ronaldo",
+  "email": "ronaldo@gmail.com",
+  "password": "$2b$10$UcGVjPoP7HwYzo6/.m7ra.EOf1IZRYowoqC3P6jfDSHGPaEHMKid2",
+  "role": "buyer",
+  "action": "unlock",
+  "isVerified": false,
+  "otp": "723701",
+  "otpExpires": {
+    "$date": "2025-09-13T06:25:14.214Z"
+  },
+  "createdAt": {
+    "$date": "2025-09-13T06:15:14.245Z"
+  },
+  "updatedAt": {
+    "$date": "2025-09-13T06:15:14.245Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "68c5170162da66c07b04a97f"
+  },
+  "username": "khangnee",
+  "fullname": "khang ne",
+  "email": "baoichaudoi@gmail.com",
+  "password": "$2b$10$FzYmeywLrsoe6bIVAj8/ouroUbhg9/m2aJZU2QyqfE4CZ02pk/VCy",
+  "role": "buyer",
+  "action": "unlock",
+  "isVerified": false,
+  "otp": "266465",
+  "otpExpires": {
+    "$date": "2025-09-13T07:12:25.510Z"
+  },
+  "createdAt": {
+    "$date": "2025-09-13T07:02:25.533Z"
+  },
+  "updatedAt": {
+    "$date": "2025-09-13T15:13:20.133Z"
+  },
+  "avatarURL": "https://lh3.googleusercontent.com/a/ACg8ocK6aXDew0imC2xzAdRbD5XozFspXEaxpvZn4Cnr-5iVefe7l5I=s96-c",
+  "googleId": "101082476176044690684"
+},
+{
+  "_id": {
+    "$oid": "68c51956b6eb581e57ab06e2"
+  },
+  "username": "ducanh",
+  "fullname": "duc anh tran",
+  "email": "banghoangtu35@gmail.com",
+  "password": "$2b$10$0ZEFCibpGwQ1Zup.j2Iu/OIpzeOz9.xwjjVKJBs2OKKCIGjIRuxUC",
+  "role": "buyer",
+  "action": "unlock",
+  "isVerified": false,
+  "otp": "939314",
+  "otpExpires": {
+    "$date": "2025-09-13T07:22:22.492Z"
+  },
+  "createdAt": {
+    "$date": "2025-09-13T07:12:22.508Z"
+  },
+  "updatedAt": {
+    "$date": "2025-09-13T15:15:46.252Z"
+  },
+  "avatarURL": "https://lh3.googleusercontent.com/a/ACg8ocIR016mgEExQ42smtSJd5TuEWnemYoCRabHJWJeZsrUuZQeYqHv=s96-c",
+  "googleId": "105764419713740093263"
+},
+{
+  "_id": {
+    "$oid": "68c51c790ce9c1fca51c160b"
+  },
+  "username": "customer",
+  "fullname": "Customer",
+  "email": "duytspt009@gmail.com",
+  "password": "$2b$10$lmpfcmjDBzNN2IvYOG4mGuk5alITNlVY79Dyo9rZ9uDaEsM2tYT8y",
+  "role": "buyer",
+  "action": "unlock",
+  "isVerified": false,
+  "otp": "674913",
+  "otpExpires": {
+    "$date": "2025-09-13T07:35:45.632Z"
+  },
+  "createdAt": {
+    "$date": "2025-09-13T07:25:45.645Z"
+  },
+  "updatedAt": {
+    "$date": "2025-09-13T07:25:45.645Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "68c51f01c477a0ca5b9be18d"
+  },
+  "username": "duydz",
+  "fullname": "Duy Che",
+  "email": "duytspt008@gmail.com",
+  "password": "$2b$10$kSZqxD7Pr5wesDt1IkYAYOGS0jAIJttofTQQiItB3wchJFjYAQfFG",
+  "role": "buyer",
+  "action": "unlock",
+  "isVerified": false,
+  "otp": "381568",
+  "otpExpires": {
+    "$date": "2025-09-13T07:46:33.414Z"
+  },
+  "createdAt": {
+    "$date": "2025-09-13T07:36:33.427Z"
+  },
+  "updatedAt": {
+    "$date": "2025-09-13T07:36:33.427Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "68c52479562b012b3fe6ef84"
+  },
+  "username": "trananhblue",
+  "fullname": "Trần Anh Blue",
+  "email": "tranducanh220604@gmail.com",
+  "password": "$2b$10$3G2Qp8FZzfaSDTCe/RxZM.hGkytIVSBQUQ.Dn6e1a0gLYoP1dFDMO",
+  "role": "buyer",
+  "action": "unlock",
+  "isVerified": true,
+  "otp": null,
+  "otpExpires": null,
+  "createdAt": {
+    "$date": "2025-09-13T07:59:53.373Z"
+  },
+  "updatedAt": {
+    "$date": "2025-09-13T15:13:06.256Z"
+  },
+  "avatarURL": "https://lh3.googleusercontent.com/a/ACg8ocLb3g8c5HGibYCEQt_7Qmkup51b5Ro8Hj_46py4B77PuEhUuZQ=s96-c",
+  "googleId": "104013643318628747705"
+},
+{
+  "_id": {
+    "$oid": "68c52578562b012b3fe6efad"
+  },
+  "username": "traudajca",
+  "fullname": "Trau Dai Ca",
+  "email": "traudajca@gmail.com",
+  "password": "$2b$10$M2c0vMyayRTnx9ZseM0Tl.ImNsK7iC8eXF7qJyHmjTgxKJndQcksK",
+  "role": "buyer",
+  "action": "unlock",
+  "isVerified": true,
+  "otp": null,
+  "otpExpires": null,
+  "createdAt": {
+    "$date": "2025-09-13T08:04:08.055Z"
+  },
+  "updatedAt": {
+    "$date": "2025-09-16T08:58:08.859Z"
+  },
+  "avatarURL": "https://lh3.googleusercontent.com/a/ACg8ocINF04rzIgnFDh9D7v2bhgijL5wTkgovvlpDy9dPM-wT1pA4m7o=s96-c",
+  "googleId": "116349184075426206055"
 }]

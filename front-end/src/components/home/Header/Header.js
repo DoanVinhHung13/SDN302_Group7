@@ -1,32 +1,73 @@
-import React, { useEffect, useState } from "react";
-import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { MdClose } from "react-icons/md";
-import { HiMenuAlt2 } from "react-icons/hi";
+import axios from "axios";
 import { motion } from "framer-motion";
-import { logo, logoLight } from "../../../assets/images";
-import Image from "../../designLayouts/Image";
-import { navBarList } from "../../../constants";
-import Flex from "../../designLayouts/Flex";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { FiMessageSquare, FiShoppingBag, FiUser } from "react-icons/fi";
+import { HiMenuAlt2 } from "react-icons/hi";
+import { MdKeyboardArrowDown } from "react-icons/md";
 import { useDispatch, useSelector } from "react-redux";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { logout } from "../../../features/auth/authSlice";
+import {
+  resetUserInfo,
+  setProducts,
+  setUserInfo,
+} from "../../../redux/orebiSlice";
 
 const Header = () => {
   const [showMenu, setShowMenu] = useState(true);
   const [sidenav, setSidenav] = useState(false);
   const [category, setCategory] = useState(false);
-  const [brand, setBrand] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
+  const [showUser, setShowUser] = useState(false);
+  const [showCategories, setShowCategories] = useState(false);
+  const [allProducts, setAllProducts] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filteredProducts, setFilteredProducts] = useState([]);
+  const [userName, setUserName] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(
+    !!localStorage.getItem("accessToken")
+  );
+  const [selectedCategory, setSelectedCategory] = useState("All Categories");
+
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  
-  // Get user info from Redux store
-  const { user, isAuthenticated } = useSelector(state => state.auth);
-  
-  // Handle responsive menu
+  const ref = useRef();
+  const categoryRef = useRef();
+
+  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:9999";
+  const { user, isAuthenticated } = useSelector((state) => state.auth);
+  const orebiReducer = useSelector((state) => state.orebiReducer) || {};
+  const products = orebiReducer.products || [];
+  const chatState = useSelector((state) => state.chat);
+  const chatNotifications =
+    chatState?.conversations?.reduce(
+      (count, conv) => count + (conv.unreadCount || 0),
+      0
+    ) || 0;
+
+  const cartState = useSelector((state) => state.cart) || {};
+  const cartItems = cartState.items || [];
+
+  const cartTotalCount = cartItems.reduce(
+    (total, item) => total + item.quantity,
+    0
+  );
+
+  const categories = [
+    "All Categories",
+    "Electronics",
+    "Fashion",
+    "Home & Garden",
+    "Motors",
+    "Sports",
+    "Books",
+    "Health & Beauty",
+    "Toys & Games",
+  ];
+
   useEffect(() => {
     let ResponsiveMenu = () => {
-      if (window.innerWidth < 667) {
+      if (window.innerWidth < 1024) {
         setShowMenu(false);
       } else {
         setShowMenu(true);
@@ -34,262 +75,430 @@ const Header = () => {
     };
     ResponsiveMenu();
     window.addEventListener("resize", ResponsiveMenu);
-    
-    // Add scroll event listener
-    const handleScroll = () => {
-      if (window.scrollY > 20) {
-        setScrolled(true);
-      } else {
-        setScrolled(false);
-      }
-    };
-    window.addEventListener('scroll', handleScroll);
-    
-    // Cleanup event listeners
+
     return () => {
       window.removeEventListener("resize", ResponsiveMenu);
-      window.removeEventListener('scroll', handleScroll);
-    }
+    };
   }, []);
 
-  // Handle logout
-  const handleLogout = () => {
-    dispatch(logout());
-    setSidenav(false);
-    navigate('/signin');
-  };
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) {
+        setShowUser(false);
+      }
+      if (categoryRef.current && !categoryRef.current.contains(e.target)) {
+        setShowCategories(false);
+      }
+    };
 
-  // Navigate to store registration
-  const handleBecomeASeller = () => {
-    navigate('/store-registration');
-    setSidenav(false);
-  };
+    document.body.addEventListener("click", handleClickOutside);
+    return () => document.body.removeEventListener("click", handleClickOutside);
+  }, []);
 
-  // Handle navigation based on user role
-  const handleNavigation = (link, title) => {
-    // If user is a seller and they click on Shop, redirect to /overview
-    if (isAuthenticated && user?.role === 'seller' && title === 'Shop') {
-      navigate('/overview');
-      setSidenav(false);
-    } else {
-      navigate(link);
-      setSidenav(false);
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    setIsLoggedIn(!!token);
+  }, []);
+
+  const fetchProducts = useCallback(async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/products`);
+      const formattedProducts = response.data.data.map((product) => ({
+        ...product,
+        name: product.title,
+        image: product.image,
+      }));
+
+      dispatch(setProducts(formattedProducts));
+      setAllProducts(formattedProducts);
+    } catch (error) {
+      console.error("Failed to fetch products:", error);
     }
+  }, [API_BASE_URL, dispatch]);
+
+  // Fetch user data function
+  const fetchUserData = useCallback(async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        setIsLoggedIn(false);
+        return;
+      }
+
+      const response = await axios.get(`${API_BASE_URL}/api/profile`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setUserName(response.data.fullname || response.data.username);
+      dispatch(setUserInfo(response.data));
+      setIsLoggedIn(true);
+    } catch (error) {
+      console.error("Failed to fetch user profile:", error);
+      if (error.response && error.response.status === 401) {
+        localStorage.removeItem("accessToken");
+        setIsLoggedIn(false);
+      }
+    }
+  }, [API_BASE_URL, dispatch]);
+
+  useEffect(() => {
+    fetchProducts();
+
+    if (isLoggedIn) {
+      fetchUserData();
+    }
+  }, [isLoggedIn, fetchProducts, fetchUserData]);
+
+  useEffect(() => {
+    const filtered = allProducts
+      .filter(
+        (item) =>
+          (item.title &&
+            item.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          (item.name &&
+            item.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          (item.description &&
+            item.description.toLowerCase().includes(searchQuery.toLowerCase()))
+      )
+      .map((item) => ({
+        _id: item._id,
+        image: item.image,
+        name: item.name || item.title || "Untitled Product",
+        price: item.price,
+        description: item.description,
+        category: item.categoryId?.name || "",
+        seller: item.sellerId?.username || "",
+      }));
+
+    setFilteredProducts(filtered);
+  }, [searchQuery, allProducts]);
+
+  const handleLogout = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      await axios.post(`${API_BASE_URL}/api/logout`, null, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      localStorage.removeItem("accessToken");
+      dispatch(resetUserInfo());
+      dispatch(logout());
+      setIsLoggedIn(false);
+      setUserName(null);
+      setSidenav(false);
+      navigate("/signin");
+    } catch (error) {
+      console.error("Logout failed:", error);
+      localStorage.removeItem("accessToken");
+      dispatch(logout());
+      setIsLoggedIn(false);
+      setUserName(null);
+      setSidenav(false);
+      navigate("/signin");
+    }
+  };
+
+  const handleBecomeASeller = () => {
+    navigate("/store-registration");
+    setSidenav(false);
+    setShowUser(false);
+  };
+
+  const handleSearch = (e) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const getProductImage = (item) => {
+    if (!item.image) {
+      return "https://via.placeholder.com/100?text=No+Image";
+    }
+
+    if (item.image.startsWith("http://") || item.image.startsWith("https://")) {
+      return item.image;
+    } else {
+      return `${API_BASE_URL}/uploads/${item.image}`;
+    }
+  };
+
+  const handleCategorySelect = (category) => {
+    setSelectedCategory(category);
+    setShowCategories(false);
   };
 
   return (
-    <div className={`w-full h-20 sticky top-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white shadow-md' : 'bg-white'} border-b-[1px] border-b-gray-200`}>
-      <nav className="h-full px-4 max-w-container mx-auto relative">
-        <Flex className="flex items-center justify-between h-full">
-          <Link to="/">
-            <div className="transform hover:scale-105 transition-transform duration-300">
-              <Image className="w-32 object-cover" imgSrc={logo} />
+    <div className="w-full bg-white sticky top-0 z-50 border-b border-gray-200">
+      {/* Top Navigation Bar */}
+      <div className="bg-gray-50 border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex items-center justify-between h-10 text-sm">
+            <div className="flex items-center space-x-6">
+              <Link to="/deals" className="text-gray-600 hover:text-blue-600">
+                Daily Deals
+              </Link>
+              <Link to="/outlet" className="text-gray-600 hover:text-blue-600">
+                Brand Outlet
+              </Link>
+              <Link to="/help" className="text-gray-600 hover:text-blue-600">
+                Help & Contact
+              </Link>
+            </div>
+
+            <div className="flex items-center space-x-6">
+              {isAuthenticated && user?.role === "buyer" && (
+                <button
+                  onClick={handleBecomeASeller}
+                  className="text-gray-600 hover:text-blue-600"
+                >
+                  Sell
+                </button>
+              )}
+              {isAuthenticated && (
+                <Link
+                  to="/watchlist"
+                  className="text-gray-600 hover:text-blue-600 flex items-center"
+                >
+                  Watchlist <MdKeyboardArrowDown className="ml-1" />
+                </Link>
+              )}
+
+              <Link
+                to="/cart"
+                className="relative text-gray-600 hover:text-blue-600"
+              >
+                <FiShoppingBag className="text-xl" />
+                {cartTotalCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    {cartTotalCount}
+                  </span>
+                )}
+              </Link>
+              {isAuthenticated && (
+                <Link
+                  to="/chat"
+                  className="relative text-gray-600 hover:text-blue-600"
+                >
+                  <FiMessageSquare className="text-xl" />
+                  {chatNotifications > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                      {chatNotifications}
+                    </span>
+                  )}
+                </Link>
+              )}
+
+              {/* User Menu */}
+              <div ref={ref} className="relative">
+                <button
+                  onClick={() => setShowUser(!showUser)}
+                  className="text-gray-600 hover:text-blue-600"
+                >
+                  <FiUser className="text-xl" />
+                </button>
+
+                {showUser && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute right-0 top-full mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-xl z-50"
+                  >
+                    {isAuthenticated ? (
+                      <div className="py-2">
+                        <div className="px-4 py-2 border-b border-gray-100">
+                          <p className="text-sm font-medium text-gray-900">
+                            Hello, {userName || user?.username}
+                          </p>
+                        </div>
+                        <Link
+                          to="/order-history"
+                          onClick={() => setShowUser(false)}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        >
+                          Order History
+                        </Link>
+
+                        <Link
+                          to="/return-requests"
+                          onClick={() => setShowUser(false)}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        >
+                          Return Requests
+                        </Link>
+                        <Link
+                          to="/my-reviews"
+                          onClick={() => setShowUser(false)}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        >
+                          My Reviews
+                        </Link>
+                        <Link
+                          to="/my-reviews"
+                          onClick={() => setShowUser(false)}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        >
+                          My Reviews
+                        </Link>
+                        <div className="border-t border-gray-100 mt-2">
+                          <button
+                            onClick={handleLogout}
+                            className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50"
+                          >
+                            Sign out
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="py-2">
+                        <Link
+                          to="/signin"
+                          onClick={() => setShowUser(false)}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        >
+                          Sign in
+                        </Link>
+                        <Link
+                          to="/signup"
+                          onClick={() => setShowUser(false)}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        >
+                          Register
+                        </Link>
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Header */}
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo */}
+          <Link to="/" className="flex items-center">
+            <div className="text-3xl font-bold text-[#e53e3e] tracking-tight">
+              TUTHAITU
             </div>
           </Link>
-          <div>
-            {showMenu && (
-              <motion.ul
-                initial={{ y: 30, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.5 }}
-                className="flex items-center w-auto z-50 p-0 gap-2"
-              >
-                <>
-                  {navBarList.map(({ _id, title, link }) => (
-                    <NavLink
-                      key={_id}
-                      className={({ isActive }) => 
-                        `flex font-normal hover:font-bold w-20 h-6 justify-center items-center px-12 text-base ${isActive ? 'text-[#0F52BA] font-bold' : 'text-[#767676]'} hover:text-[#0F52BA] hover:underline underline-offset-[4px] decoration-[1px] md:border-r-[2px] border-r-gray-300 hoverEffect last:border-r-0 transition-colors`}
-                      onClick={(e) => {
-                        if (isAuthenticated && user?.role === 'seller' && title === 'Shop') {
-                          e.preventDefault();
-                          navigate('/overview');
-                        }
-                      }}
-                      to={link}
-                      state={{ data: location.pathname.split("/")[1] }}
-                    >
-                      <li>{title}</li>
-                    </NavLink>
-                  ))}
-                  
-                  {/* User info display */}
-                  {isAuthenticated ? (
-                    <div className="flex items-center ml-4 space-x-4">
-                      <span className="text-[#262626] font-medium">
-                        Hello, {user?.username || 'User'}
-                      </span>
-                      {/* Show "Become a Seller" button only for buyers */}
-                      {user?.role === 'buyer' && (
-                        <button 
-                          onClick={handleBecomeASeller}
-                          className="border border-[#0F52BA] text-[#0F52BA] px-4 py-1 rounded hover:bg-[#0F52BA] hover:text-white transition-colors duration-300"
-                        >
-                          Become a Seller
-                        </button>
-                      )}
-                      <button 
-                        onClick={handleLogout}
-                        className="bg-[#0F52BA] text-white px-4 py-1 rounded hover:bg-[#0A3C8A] transition-colors duration-300 shadow-md hover:shadow-lg"
-                      >
-                        Logout
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center ml-4 space-x-4">
-                      <Link to="/signin">
-                        <button className="bg-[#0F52BA] text-white px-4 py-1 rounded hover:bg-[#0A3C8A] transition-colors duration-300 shadow-md hover:shadow-lg">
-                          Sign In
-                        </button>
-                      </Link>
-                      <Link to="/signup">
-                        <button className="border border-[#0F52BA] text-[#0F52BA] px-4 py-1 rounded hover:bg-[#0F52BA] hover:text-white transition-colors duration-300">
-                          Sign Up
-                        </button>
-                      </Link>
-                    </div>
-                  )}
-                </>
-              </motion.ul>
-            )}
-            <HiMenuAlt2
-              onClick={() => setSidenav(!sidenav)}
-              className="inline-block md:hidden cursor-pointer w-8 h-6 absolute top-6 right-4 text-[#0F52BA]"
-            />
-            {sidenav && (
-              <div className="fixed top-0 left-0 w-full h-screen bg-black text-gray-200 bg-opacity-80 z-50">
-                <motion.div
-                  initial={{ x: -300, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ duration: 0.5 }}
-                  className="w-[80%] h-full relative"
+
+          {/* Search Bar */}
+          <div className="flex-1 max-w-4xl mx-8">
+            <div className="flex items-center border-2 border-gray-300 rounded overflow-hidden hover:border-blue-500 focus-within:border-blue-500">
+              {/* Category Dropdown */}
+              <div ref={categoryRef} className="relative">
+                <button
+                  onClick={() => setShowCategories(!showCategories)}
+                  className="flex items-center px-4 py-3 bg-gray-50 border-r border-gray-300 text-gray-700 hover:bg-gray-100 min-w-max"
                 >
-                  <div className="w-full h-full bg-[#0F52BA] p-6">
-                    <img
-                      className="w-28 mb-6"
-                      src={logoLight}
-                      alt="logoLight"
-                    />
-                    <ul className="text-gray-200 flex flex-col gap-2">
-                      {navBarList.map((item) => (
-                        <li
-                          className="font-normal hover:font-bold items-center text-lg text-gray-200 hover:underline underline-offset-[4px] decoration-[1px] hover:text-white md:border-r-[2px] border-r-gray-300 hoverEffect last:border-r-0"
-                          key={item._id}
-                        >
-                          <NavLink
-                            to={item.link}
-                            state={{ data: location.pathname.split("/")[1] }}
-                            onClick={(e) => {
-                              if (isAuthenticated && user?.role === 'seller' && item.title === 'Shop') {
-                                e.preventDefault();
-                                navigate('/overview');
-                                setSidenav(false);
-                              } else {
-                                setSidenav(false);
-                              }
-                            }}
-                          >
-                            {item.title}
-                          </NavLink>
-                        </li>
-                      ))}
-                      
-                      {/* User section in mobile menu */}
-                      {isAuthenticated ? (
-                        <>
-                          <li className="font-bold text-lg text-white mt-4">
-                            Hello, {user?.username || 'User'}
-                          </li>
-                          {/* Show "Become a Seller" option only for buyers */}
-                          {user?.role === 'buyer' && (
-                            <li className="font-normal hover:font-bold items-center text-lg text-gray-200 hover:underline underline-offset-[4px] decoration-[1px] hover:text-white">
-                              <button 
-                                onClick={handleBecomeASeller}
-                                className="w-full text-left"
-                              >
-                                Become a Seller
-                              </button>
-                            </li>
-                          )}
-                          <li className="font-normal hover:font-bold items-center text-lg text-gray-200 hover:underline underline-offset-[4px] decoration-[1px] hover:text-white">
-                            <button 
-                              onClick={handleLogout}
-                              className="w-full text-left"
-                            >
-                              Logout
-                            </button>
-                          </li>
-                        </>
-                      ) : (
-                        <li className="font-normal hover:font-bold items-center text-lg text-gray-200 hover:underline underline-offset-[4px] decoration-[1px] hover:text-white">
-                          <NavLink
-                            to="/signin"
-                            onClick={() => setSidenav(false)}
-                          >
-                            Sign In
-                          </NavLink>
-                        </li>
-                      )}
-                    </ul>
-                    <div className="mt-4">
-                      <h1
-                        onClick={() => setCategory(!category)}
-                        className="flex justify-between text-base cursor-pointer items-center font-titleFont mb-2"
-                      >
-                        Shop by Category{" "}
-                        <span className="text-lg">{category ? "-" : "+"}</span>
-                      </h1>
-                      {category && (
-                        <motion.ul
-                          initial={{ y: 15, opacity: 0 }}
-                          animate={{ y: 0, opacity: 1 }}
-                          transition={{ duration: 0.4 }}
-                          className="text-sm flex flex-col gap-1"
-                        >
-                          <li className="headerSedenavLi">New Arrivals</li>
-                          <li className="headerSedenavLi">Gadgets</li>
-                          <li className="headerSedenavLi">Accessories</li>
-                          <li className="headerSedenavLi">Electronics</li>
-                          <li className="headerSedenavLi">Others</li>
-                        </motion.ul>
-                      )}
-                    </div>
-                    <div className="mt-4">
-                      <h1
-                        onClick={() => setBrand(!brand)}
-                        className="flex justify-between text-base cursor-pointer items-center font-titleFont mb-2"
-                      >
-                        Shop by Brand
-                        <span className="text-lg">{brand ? "-" : "+"}</span>
-                      </h1>
-                      {brand && (
-                        <motion.ul
-                          initial={{ y: 15, opacity: 0 }}
-                          animate={{ y: 0, opacity: 1 }}
-                          transition={{ duration: 0.4 }}
-                          className="text-sm flex flex-col gap-1"
-                        >
-                          <li className="headerSedenavLi">Apple</li>
-                          <li className="headerSedenavLi">Samsung</li>
-                          <li className="headerSedenavLi">Sony</li>
-                          <li className="headerSedenavLi">Dell</li>
-                          <li className="headerSedenavLi">Others</li>
-                        </motion.ul>
-                      )}
-                    </div>
-                  </div>
-                  <span
-                    onClick={() => setSidenav(false)}
-                    className="w-8 h-8 border-[1px] border-gray-300 absolute top-2 -right-10 text-gray-300 text-2xl flex justify-center items-center cursor-pointer hover:border-red-500 hover:text-red-500 duration-300"
-                  >
-                    <MdClose />
+                  <span className="text-sm font-medium truncate max-w-32">
+                    {selectedCategory}
                   </span>
-                </motion.div>
+                  <MdKeyboardArrowDown className="ml-2 text-gray-500" />
+                </button>
+
+                {showCategories && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute top-full left-0 right-0 bg-white border border-gray-300 shadow-lg z-50 max-h-80 overflow-y-auto"
+                  >
+                    {categories.map((cat, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleCategorySelect(cat)}
+                        className={`w-full text-left px-4 py-2 hover:bg-blue-50 text-sm ${
+                          selectedCategory === cat
+                            ? "bg-blue-50 text-blue-600"
+                            : "text-gray-700"
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
               </div>
-            )}
+
+              {/* Search Input */}
+              <div className="flex-1 relative">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={handleSearch}
+                  placeholder="Search for anything"
+                  className="w-full px-4 py-3 outline-none text-gray-700 placeholder-gray-500"
+                />
+
+                {/* Search Results Dropdown */}
+                {searchQuery && filteredProducts.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="absolute top-full left-0 right-0 bg-white border border-gray-300 shadow-xl max-h-96 overflow-y-auto z-50"
+                  >
+                    {filteredProducts.slice(0, 8).map((item) => (
+                      <div
+                        key={item._id}
+                        onClick={() => {
+                          navigate(`/product/${item._id}`, { state: { item } });
+                          setSearchQuery("");
+                        }}
+                        className="flex items-center p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                      >
+                        <div className="w-12 h-12 bg-gray-100 rounded overflow-hidden flex-shrink-0">
+                          <img
+                            className="w-full h-full object-contain"
+                            src={getProductImage(item)}
+                            alt={item.name}
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src =
+                                "https://via.placeholder.com/48?text=No+Image";
+                            }}
+                          />
+                        </div>
+                        <div className="ml-3 flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">
+                            {item.name}
+                          </p>
+                          <p className="text-sm text-blue-600 font-semibold">
+                            ${item.price?.toFixed(2) || "0.00"}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </motion.div>
+                )}
+              </div>
+
+              {/* Search Button */}
+              <button className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors">
+                Search
+              </button>
+            </div>
           </div>
-        </Flex>
-      </nav>
+
+          {/* Right Actions */}
+          <div className="flex items-center space-x-4">
+            {/* Chat */}
+
+            {/* Mobile Menu */}
+            <button
+              onClick={() => setSidenav(!sidenav)}
+              className="lg:hidden text-gray-600 hover:text-blue-600"
+            >
+              <HiMenuAlt2 className="text-2xl" />
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

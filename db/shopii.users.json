@@ -1,5 +1,23 @@
 [{
   "_id": {
+    "$oid": "68ccb7e8de56a05966a0c083"
+  },
+  "googleId": "103825950797633897966",
+  "fullname": "nguyen huy",
+  "email": "huyn98699@gmail.com",
+  "role": "buyer",
+  "avatarURL": "https://lh3.googleusercontent.com/a/ACg8ocJOI2N3N0Jh2z4u2dgy869AFDX7WwLxDN7lBWOuEUIre81SRw=s96-c",
+  "action": "unlock",
+  "isVerified": true,
+  "createdAt": {
+    "$date": "2025-09-19T01:54:48.057Z"
+  },
+  "updatedAt": {
+    "$date": "2025-09-19T01:54:48.057Z"
+  }
+},
+{
+  "_id": {
     "$oid": "60d21b4667d0d8992e610c88"
   },
   "username": "johndoe",
@@ -148,11 +166,11 @@
   "_id": {
     "$oid": "68c51f01c477a0ca5b9be18d"
   },
-  "username": "duydz",
-  "fullname": "Duy Che",
-  "email": "duytspt008@gmail.com",
-  "password": "$2b$10$kSZqxD7Pr5wesDt1IkYAYOGS0jAIJttofTQQiItB3wchJFjYAQfFG",
-  "role": "buyer",
+  "username": "seller",
+  "fullname": "seller",
+  "email": "seller@gmail.com",
+  "password": "$2b$10$M2c0vMyayRTnx9ZseM0Tl.ImNsK7iC8eXF7qJyHmjTgxKJndQcksK",
+  "role": "seller",
   "action": "unlock",
   "isVerified": false,
   "otp": "381568",
@@ -170,10 +188,10 @@
   "_id": {
     "$oid": "68c52479562b012b3fe6ef84"
   },
-  "username": "trananhblue",
-  "fullname": "Trần Anh Blue",
-  "email": "tranducanh220604@gmail.com",
-  "password": "$2b$10$3G2Qp8FZzfaSDTCe/RxZM.hGkytIVSBQUQ.Dn6e1a0gLYoP1dFDMO",
+  "username": "buyer1",
+  "fullname": "buyer1",
+  "email": "buyer@gmail.com",
+  "password": "$2b$10$M2c0vMyayRTnx9ZseM0Tl.ImNsK7iC8eXF7qJyHmjTgxKJndQcksK",
   "role": "buyer",
   "action": "unlock",
   "isVerified": true,
@@ -192,11 +210,11 @@
   "_id": {
     "$oid": "68c52578562b012b3fe6efad"
   },
-  "username": "traudajca",
-  "fullname": "Trau Dai Ca",
-  "email": "traudajca@gmail.com",
+  "username": "admin1",
+  "fullname": "Admin",
+  "email": "admin@gmail.com",
   "password": "$2b$10$M2c0vMyayRTnx9ZseM0Tl.ImNsK7iC8eXF7qJyHmjTgxKJndQcksK",
-  "role": "buyer",
+  "role": "admin",
   "action": "unlock",
   "isVerified": true,
   "otp": null,

@@ -47,7 +47,11 @@ const syncOrderStatus = async (orderId) => {
       if (order && order.status !== 'shipped') {
         const updatedOrder = await Order.findByIdAndUpdate(
           orderId, 
-          { status: 'shipped' }, 
+          { 
+            status: 'shipped',
+            // Khi order shipped, payment vẫn giữ ở trạng thái 'held' để admin có thể xử lý
+            // paymentStatus: 'held' // Không cần update vì đã set từ đầu
+          }, 
           { new: true }
         );
         console.log(`Order status updated successfully: ${updatedOrder.status}`);
@@ -149,6 +153,7 @@ const createOrder = async (req, res) => {
       addressId: selectedAddressId,
       totalPrice,
       status: 'pending', // Default status
+      paymentStatus: 'held', // eBay giữ tiền ngay khi đặt hàng
     });
     await order.save();
 
@@ -356,4 +361,153 @@ const updateOrderItemStatus = async (req, res) => {
   }
 };
 
-module.exports = { createOrder, getBuyerOrders, getOrderDetails, updateOrderItemStatus };
+// Tạo đơn hàng và thanh toán PayPal trong một bước
+const createOrderWithPayPal = async (req, res) => {
+  const { selectedItems, selectedAddressId, couponCode } = req.body;
+  const buyerId = req.user.id;
+
+  if (!selectedAddressId || !selectedItems || selectedItems.length === 0) {
+    return res.status(400).json({ error: 'Missing required fields: address or items' });
+  }
+
+  try {
+    // Fetch buyer details for email
+    const buyer = await User.findById(buyerId);
+    if (!buyer || !buyer.email) {
+      return res.status(400).json({ error: 'Buyer email not found' });
+    }
+    const buyerEmail = buyer.email;
+
+    // Step 1: Calculate subtotal and validate inventory/products
+    let subtotal = 0;
+    const productDetails = {};
+
+    for (const item of selectedItems) {
+      // Validate product exists
+      const product = await Product.findById(item.productId);
+      if (!product) {
+        return res.status(404).json({ error: `Product ${item.productId} not found` });
+      }
+
+      // Find or create inventory record
+      let inventory = await Inventory.findOne({ productId: item.productId });
+      
+      // If inventory doesn't exist, create it with 0 quantity
+      if (!inventory) {
+        inventory = new Inventory({
+          productId: item.productId,
+          quantity: 0
+        });
+        await inventory.save();
+      }
+      
+      // Validate inventory quantity
+      if (inventory.quantity < item.quantity) {
+        return res.status(400).json({ 
+          error: `Insufficient inventory for product ${product.title} (ID: ${item.productId}). Available: ${inventory.quantity}, Requested: ${item.quantity}`
+        });
+      }
+
+      const unitPrice = product.price;
+      subtotal += unitPrice * item.quantity;
+      productDetails[item.productId] = { unitPrice };
+    }
+
+    // Step 2: Apply voucher if provided
+    let discount = 0;
+    if (couponCode) {
+      const voucher = await Voucher.findOne({ code: couponCode });
+      if (!voucher || !voucher.isActive) {
+        return res.status(400).json({ error: 'Invalid or inactive voucher' });
+      }
+
+      if (subtotal < voucher.minOrderValue) {
+        return res.status(400).json({ error: `Order must be at least ${voucher.minOrderValue} to apply this voucher` });
+      }
+
+      if (voucher.discountType === 'fixed') {
+        discount = voucher.discount;
+      } else if (voucher.discountType === 'percentage') {
+        const calculatedDiscount = (subtotal * voucher.discount) / 100;
+        discount = voucher.maxDiscount > 0 ? Math.min(calculatedDiscount, voucher.maxDiscount) : calculatedDiscount;
+      }
+
+      // Increment usedCount and save
+      voucher.usedCount += 1;
+      await voucher.save();
+    }
+
+    const totalPrice = Math.max(subtotal - discount, 0);
+
+    // Step 3: Create the Order
+    const order = new Order({
+      buyerId,
+      addressId: selectedAddressId,
+      totalPrice,
+      status: 'pending',
+      paymentStatus: 'held', // eBay giữ tiền ngay khi đặt hàng
+      refundReason: null,
+      refundAmount: null,
+      refundDate: null,
+      paymentReleaseDate: null,
+      disputeId: null,
+    });
+    await order.save();
+
+    // Step 4: Create OrderItems and deduct from inventory
+    for (const item of selectedItems) {
+      const orderItem = new OrderItem({
+        orderId: order._id,
+        productId: item.productId,
+        quantity: item.quantity,
+        unitPrice: productDetails[item.productId].unitPrice,
+        status: 'pending',
+      });
+      await orderItem.save();
+
+      // Deduct quantity from inventory
+      await Inventory.findOneAndUpdate(
+        { productId: item.productId },
+        { 
+          $inc: { quantity: -item.quantity },
+          $set: { lastUpdated: new Date() }
+        },
+        { upsert: false }
+      );
+    }
+    
+    // Step 5: Create PayPal payment
+    const Payment = require('../models/Payment');
+    const paypalPaymentId = `PAYPAL_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    const payment = new Payment({
+      orderId: order._id,
+      userId: buyerId,
+      amount: totalPrice,
+      method: 'PayPal',
+      status: 'pending',
+      transactionId: paypalPaymentId,
+    });
+    await payment.save();
+
+    // Step 6: Tạo PayPal payment URL
+    const BASE_URL = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+    const paypalUrl = `${BASE_URL}/api/buyers/payments/paypal/simulate?paymentId=${paypalPaymentId}&orderId=${order._id}&amount=${totalPrice}`;
+
+    // Success response
+    return res.status(201).json({ 
+      message: 'Order created and PayPal payment initiated successfully',
+      orderId: order._id,
+      totalPrice,
+      paymentId: payment._id,
+      paypalPaymentId,
+      paymentUrl: paypalUrl
+    });
+
+  } catch (error) {
+    console.error('Error creating order with PayPal:', error);
+    return res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+};
+
+module.exports = { createOrder, createOrderWithPayPal, getBuyerOrders, getOrderDetails, updateOrderItemStatus };

@@ -61,6 +61,11 @@ const {
 
   // Admin Dashboard
   getAdminReport,
+
+  // Payment Management
+  getOrdersForPaymentManagement,
+  releasePaymentToSeller,
+  refundPaymentToBuyer,
 } = require("../controllers/adminController");
 
 const {
@@ -70,7 +75,7 @@ const {
   updateVoucher,
   deleteVoucher,
   toggleVoucherActive,
-} = require('../controllers/voucherController');
+} = require("../controllers/voucherController");
 
 // Áp dụng middleware xác thực và phân quyền admin cho tất cả các route trong file này
 router.use(authMiddleware);
@@ -105,8 +110,8 @@ router.delete("/products/:id", deleteProductAdmin); // xoá sản phẩm
 router.get("/products/stats", getProductStatsAdmin); // thống kê sản phẩm
 router.get("/products/:id/reviews", getProductReviewsAndStats);
 
-// // --- Order Management by Admin Routes ---
-// router.get("/orders", getAllOrdersAdmin);
+// --- Order Management by Admin Routes ---
+router.get("/orders", getAllOrdersAdmin);
 // router.get("/orders/:orderId", getOrderDetailsAdmin);
 // router.put("/orders/:orderId/status", updateOrderStatusAdmin);
 
@@ -117,12 +122,17 @@ router.delete("/reviews/:id", deleteReviewAdmin); // xoá đánh giá theo ID
 // --- Admin Dashboard Routes ---
 router.get("/report", getAdminReport);
 
+// --- Payment Management Routes ---
+router.get("/orders/payment-management", getOrdersForPaymentManagement);
+router.put("/orders/:orderId/release-payment", releasePaymentToSeller);
+router.put("/orders/:orderId/refund-payment", refundPaymentToBuyer);
+
 // Voucher Management Routes
-router.post('/vouchers', createVoucher);
-router.get('/vouchers', getVouchers);
-router.get('/vouchers/:id', getVoucherById);
-router.put('/vouchers/:id', updateVoucher);
-router.delete('/vouchers/:id', deleteVoucher);
-router.put('/vouchers/:id/toggle-active', toggleVoucherActive);
+router.post("/vouchers", createVoucher);
+router.get("/vouchers", getVouchers);
+router.get("/vouchers/:id", getVoucherById);
+router.put("/vouchers/:id", updateVoucher);
+router.delete("/vouchers/:id", deleteVoucher);
+router.put("/vouchers/:id/toggle-active", toggleVoucherActive);
 
 module.exports = router;

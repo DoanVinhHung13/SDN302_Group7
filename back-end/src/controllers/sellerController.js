@@ -1297,10 +1297,50 @@ exports.updateShippingStatus = async (req, res) => {
       });
     }
     
-    // Find shipping info
-    const shippingInfo = await ShippingInfo.findById(shippingInfoId);
+    // Find shipping info: try by _id first
+    console.log(`Looking up ShippingInfo by id: ${shippingInfoId}`);
+    let shippingInfo = await ShippingInfo.findById(shippingInfoId);
+    // If not found by id, the client may have passed an orderItemId instead - try that as a fallback
     if (!shippingInfo) {
-      return res.status(404).json({ success: false, message: "Shipping info not found" });
+      console.warn(`ShippingInfo not found by id: ${shippingInfoId}. Trying as orderItemId...`);
+      shippingInfo = await ShippingInfo.findOne({ orderItemId: shippingInfoId });
+      if (shippingInfo) {
+        console.info(`Found ShippingInfo by orderItemId: ${shippingInfo._id} (provided id was orderItemId)`);
+      }
+    }
+    if (!shippingInfo) {
+      console.error(`ShippingInfo not found for id/orderItemId: ${shippingInfoId}`);
+
+      // Try to interpret provided id as an OrderItem id; if found and ownership checks pass,
+      // create a ShippingInfo automatically so FE can update status in one step.
+      try {
+        const possibleOrderItem = await OrderItem.findById(shippingInfoId);
+        if (possibleOrderItem) {
+          // Verify seller owns the product before creating ShippingInfo
+          const possibleProduct = await Product.findById(possibleOrderItem.productId);
+          if (!possibleProduct) {
+            return res.status(404).json({ success: false, message: 'Product for order item not found' });
+          }
+          if (possibleProduct.sellerId.toString() !== req.user.id) {
+            return res.status(403).json({ success: false, message: 'Not authorized to create shipping info for this order item' });
+          }
+
+          // Create ShippingInfo with provided status
+          const newShippingInfo = new ShippingInfo({
+            orderItemId: possibleOrderItem._id,
+            trackingNumber: `TRK-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+            status: status || 'shipping'
+          });
+          await newShippingInfo.save();
+          shippingInfo = newShippingInfo;
+          console.info(`Auto-created ShippingInfo ${shippingInfo._id} for orderItem ${possibleOrderItem._id}`);
+        } else {
+          return res.status(404).json({ success: false, message: "Shipping info not found for given id or orderItemId" });
+        }
+      } catch (createErr) {
+        console.error('Error while attempting to auto-create ShippingInfo:', createErr);
+        return res.status(500).json({ success: false, message: 'Failed to create shipping info' });
+      }
     }
     
     // Find the related order item
@@ -1345,6 +1385,33 @@ exports.updateShippingStatus = async (req, res) => {
     
     orderItem.status = orderItemStatus;
     await orderItem.save();
+    
+    // ---- Sync parent Order status based on all its OrderItems ----
+    try {
+      const allItems = await OrderItem.find({ orderId: orderItem.orderId });
+      if (allItems && allItems.length > 0) {
+        const allShipped = allItems.every(i => i.status === 'shipped');
+        const allFailed = allItems.every(i => i.status === 'failed to ship');
+        const anyShipping = allItems.some(i => i.status === 'shipping');
+
+        const order = await Order.findById(orderItem.orderId);
+        if (order) {
+          if (allShipped && order.status !== 'shipped') {
+            order.status = 'shipped';
+            await order.save();
+          } else if (allFailed && order.status !== 'failed to ship') {
+            order.status = 'failed to ship';
+            await order.save();
+          } else if (anyShipping && order.status !== 'shipping') {
+            order.status = 'shipping';
+            await order.save();
+          }
+        }
+      }
+    } catch (syncErr) {
+      console.error('Error while syncing order status after shipping update:', syncErr);
+      // non-blocking: don't fail the request if sync fails
+    }
     
     res.json({
       success: true,

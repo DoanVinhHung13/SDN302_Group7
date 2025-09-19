@@ -17,6 +17,10 @@ buyerRouter.post('/payments/vietqr/callback', paymentController.vietQRCallback);
 buyerRouter.get('/payments/payos/callback', paymentController.payosCallback);
 buyerRouter.get('/payments/payos/cancel', paymentController.payosCallback); // Using the same handler for cancel, as it handles failure cases
 
+// PayPal simulation routes (public)
+buyerRouter.get('/payments/paypal/simulate', paymentController.paypalSimulate);
+buyerRouter.post('/payments/paypal/complete', paymentController.paypalComplete);
+
 // Protected routes (yêu cầu xác thực là buyer)
 buyerRouter.use(authMiddleware); // Add this line to ensure authentication happens first
 // Remove the isSellerOrBuyer middleware from the global level and apply it specifically where needed
@@ -47,6 +51,7 @@ buyerRouter.get('/vouchers/code/:code', getVoucherByCode);
 const orderRoutes = express.Router();
 orderRoutes.use(isBuyer);
 orderRoutes.post('/', orderController.createOrder);
+orderRoutes.post('/paypal', orderController.createOrderWithPayPal); // API mới cho đặt hàng + PayPal
 orderRoutes.get('/', orderController.getBuyerOrders);
 orderRoutes.get('/:id', orderController.getOrderDetails);
 orderRoutes.put('/items/:id/status', orderController.updateOrderItemStatus);

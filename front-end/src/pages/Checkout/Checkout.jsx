@@ -6,6 +6,7 @@ import Modal from "react-modal";
 import { fetchAddresses, addAddress } from "../../features/address/addressSlice";
 import { applyVoucher, clearVoucher } from "../../features/voucher/voucherSlice";
 import { createOrder } from "../../features/order/orderSlice";
+import OrderService from "../../services/api/OrderService";
 import { removeSelectedItems } from "../../features/cart/cartSlice";
 import { motion } from "framer-motion";
 import { 
@@ -179,7 +180,7 @@ const Checkout = () => {
     toast.info("Coupon code removed.");
   };
 
-  // Handle placing the order, removing the paymentMethod
+  // Handle placing the order with PayPal payment
   const handlePlaceOrder = async () => {
     if (!selectedAddressId) {
       toast.error("Please select a shipping address");
@@ -198,8 +199,10 @@ const Checkout = () => {
     };
 
     try {
-      console.log("Submitting order with items:", orderDetails.selectedItems);
-      const result = await dispatch(createOrder(orderDetails)).unwrap();
+      console.log("Submitting order with PayPal payment:", orderDetails.selectedItems);
+      
+      // Gọi API mới để tạo đơn hàng và thanh toán PayPal trong một bước
+      const result = await OrderService.createOrderWithPayPal(orderDetails);
       
       // Get all product IDs to remove from cart
       const productIds = selectedProducts.map(item => item.productId._id);
@@ -207,18 +210,50 @@ const Checkout = () => {
       // Remove the items from cart in a single batch operation
       await dispatch(removeSelectedItems(productIds)).unwrap();
       
-      toast.success("Order placed successfully!");
+      toast.success("Order created successfully! Redirecting to PayPal...");
       
-      // Navigate to payment page with stringified orderId to ensure it passes correctly
-      navigate("/payment", { 
-        state: { 
-          orderId: result.orderId.toString(), 
-          totalPrice: result.totalPrice
-        },
-        replace: true  // Use replace to prevent back navigation issues
-      });
+      // Mở PayPal payment trong popup window
+      const paypalWindow = window.open(
+        result.paymentUrl,
+        'paypal-payment',
+        'width=600,height=700,scrollbars=yes,resizable=yes'
+      );
+
+      // Lắng nghe message từ PayPal window
+      const handleMessage = (event) => {
+        if (event.origin !== window.location.origin) return;
+        
+        if (event.data.type === 'PAYPAL_SUCCESS') {
+          toast.success("Payment completed successfully!");
+          paypalWindow.close();
+          window.removeEventListener('message', handleMessage);
+          
+          // Navigate to home page
+          setTimeout(() => {
+            navigate("/", { replace: true });
+          }, 1000);
+        } else if (event.data.type === 'PAYPAL_CANCELLED') {
+          toast.error("Payment was cancelled");
+          paypalWindow.close();
+          window.removeEventListener('message', handleMessage);
+          setIsProcessing(false);
+        }
+      };
+
+      window.addEventListener('message', handleMessage);
+
+      // Kiểm tra nếu popup bị đóng thủ công
+      const checkClosed = setInterval(() => {
+        if (paypalWindow.closed) {
+          clearInterval(checkClosed);
+          window.removeEventListener('message', handleMessage);
+          setIsProcessing(false);
+        }
+      }, 1000);
+
     } catch (error) {
-      toast.error(error);
+      console.error("Error creating order with PayPal:", error);
+      toast.error(error.response?.data?.error || error.message || "Failed to create order");
       setIsProcessing(false);
     }
   };
@@ -541,7 +576,7 @@ const Checkout = () => {
                     Processing...
                   </>
                 ) : (
-                  'Place Order'
+                  'Place Order & Pay with PayPal'
                 )}
               </Button>
               
@@ -554,7 +589,7 @@ const Checkout = () => {
               }}>
                 <Typography variant="body2" color="text.secondary">
                   By placing your order, you agree to our terms and conditions. 
-                  For Cash on Delivery orders, please have the exact amount ready at the time of delivery.
+                  Payment will be processed through PayPal. Your order will be held until payment is confirmed.
                 </Typography>
               </Box>
             </Paper>

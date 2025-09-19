@@ -13,7 +13,7 @@ const createPayment = async (req, res) => {
     const userId = req.user.id;
 
     // Kiểm tra phương thức thanh toán hợp lệ
-    if (!['COD', 'VietQR', 'PayOS'].includes(method)) {
+    if (!['COD', 'VietQR', 'PayOS', 'PayPal'].includes(method)) {
       return res.status(400).json({ message: 'Phương thức thanh toán không hợp lệ.' });
     }
 
@@ -227,6 +227,33 @@ const createPayment = async (req, res) => {
         payment.status = 'failed';
         await payment.save();
         return res.status(502).json({ message: 'Lỗi giao tiếp với cổng thanh toán PayOS.' });
+      }
+    } else if (method === 'PayPal') {
+      await payment.save();
+
+      try {
+        // PayPal giả lập - tạo payment URL giả
+        const paypalPaymentId = `PAYPAL_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        // Lưu transactionId cho PayPal
+        payment.transactionId = paypalPaymentId;
+        await payment.save();
+
+        // Tạo URL thanh toán PayPal giả lập
+        const BASE_URL = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+        const paypalUrl = `${BASE_URL}/api/buyers/payments/paypal/simulate?paymentId=${paypalPaymentId}&orderId=${orderId}&amount=${order.totalPrice}`;
+
+        return res.status(201).json({
+          message: 'Đã tạo yêu cầu thanh toán PayPal thành công',
+          payment,
+          paymentUrl: paypalUrl,
+          paypalPaymentId: paypalPaymentId
+        });
+      } catch (apiError) {
+        console.error('Lỗi tạo thanh toán PayPal:', apiError);
+        payment.status = 'failed';
+        await payment.save();
+        return res.status(500).json({ message: 'Lỗi tạo thanh toán PayPal.' });
       }
     }
   } catch (error) {
@@ -455,6 +482,215 @@ const payosCallback = async (req, res) => {
 };
 
 /**
+ * PayPal giả lập - xử lý thanh toán
+ */
+const paypalSimulate = async (req, res) => {
+  try {
+    const { paymentId, orderId, amount } = req.query;
+    
+    if (!paymentId || !orderId) {
+      return res.status(400).json({ message: 'Missing required parameters' });
+    }
+
+    // Tìm payment
+    const payment = await Payment.findOne({ 
+      transactionId: paymentId,
+      orderId: orderId 
+    });
+    
+    if (!payment) {
+      return res.status(404).json({ message: 'Payment not found' });
+    }
+
+    // Trả về trang thanh toán PayPal giả lập
+    const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>PayPal Payment Simulation</title>
+        <style>
+            body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+            .header { background: #0070ba; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+            .content { border: 1px solid #ddd; padding: 30px; border-radius: 0 0 8px 8px; }
+            .amount { font-size: 24px; font-weight: bold; color: #0070ba; margin: 20px 0; }
+            .button { background: #0070ba; color: white; padding: 12px 30px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; margin: 10px; }
+            .button:hover { background: #005ea6; }
+            .button.cancel { background: #6c757d; }
+            .button.cancel:hover { background: #545b62; }
+            .info { background: #f8f9fa; padding: 15px; border-radius: 4px; margin: 20px 0; }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>PayPal</h1>
+            <p>Complete your payment</p>
+        </div>
+        <div class="content">
+            <h2>Payment Details</h2>
+            <div class="info">
+                <p><strong>Order ID:</strong> ${orderId}</p>
+                <p><strong>Payment ID:</strong> ${paymentId}</p>
+                <p><strong>Amount:</strong> <span class="amount">$${amount}</span></p>
+            </div>
+            
+            <p>This is a simulated PayPal payment. Click "Pay Now" to complete the payment or "Cancel" to cancel.</p>
+            
+            <div style="text-align: center; margin-top: 30px;">
+                <button class="button" onclick="completePayment()">Pay Now</button>
+                <button class="button cancel" onclick="cancelPayment()">Cancel</button>
+            </div>
+        </div>
+        
+        <script>
+            function completePayment() {
+                // Gọi API để hoàn thành thanh toán
+                fetch('/api/buyers/payments/paypal/complete', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        paymentId: '${paymentId}',
+                        orderId: '${orderId}',
+                        status: 'success'
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Payment completed successfully!');
+                        window.close();
+                        // Thông báo cho parent window
+                        if (window.opener) {
+                            window.opener.postMessage({type: 'PAYPAL_SUCCESS', orderId: '${orderId}'}, '*');
+                        }
+                    } else {
+                        alert('Payment failed: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Payment failed due to an error');
+                });
+            }
+            
+            function cancelPayment() {
+                // Gọi API để hủy thanh toán
+                fetch('/api/buyers/payments/paypal/complete', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        paymentId: '${paymentId}',
+                        orderId: '${orderId}',
+                        status: 'cancelled'
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert('Payment cancelled');
+                    window.close();
+                    // Thông báo cho parent window
+                    if (window.opener) {
+                        window.opener.postMessage({type: 'PAYPAL_CANCELLED', orderId: '${orderId}'}, '*');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    window.close();
+                });
+            }
+        </script>
+    </body>
+    </html>
+    `;
+
+    res.setHeader('Content-Type', 'text/html');
+    res.send(html);
+  } catch (error) {
+    console.error('Error in PayPal simulation:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+/**
+ * PayPal giả lập - hoàn thành thanh toán
+ */
+const paypalComplete = async (req, res) => {
+  try {
+    const { paymentId, orderId, status } = req.body;
+    
+    if (!paymentId || !orderId || !status) {
+      return res.status(400).json({ message: 'Missing required parameters' });
+    }
+
+    // Tìm payment
+    const payment = await Payment.findOne({ 
+      transactionId: paymentId,
+      orderId: orderId 
+    });
+    
+    if (!payment) {
+      return res.status(404).json({ message: 'Payment not found' });
+    }
+
+    if (status === 'success') {
+      // Cập nhật payment thành paid
+      payment.status = 'paid';
+      payment.paidAt = new Date();
+      await payment.save();
+      
+      // Cập nhật đơn hàng
+      try {
+        await updateOrderAfterPayment(payment.orderId);
+        console.log('Order updated successfully for PayPal payment:', payment.orderId);
+        
+        // Gửi email thông báo cho buyer
+        const Order = require('../models/Order');
+        const User = require('../models/User');
+        const { sendEmail } = require('../utils/email');
+        
+        const order = await Order.findById(payment.orderId).populate('buyerId');
+        if (order && order.buyerId && order.buyerId.email) {
+          try {
+            const emailSubject = 'Payment Successful - Order Confirmation';
+            const emailText = `Dear ${order.buyerId.username},\n\nYour payment has been processed successfully!\nOrder ID: ${order._id}\nAmount: $${payment.amount}\n\nYour order is now being processed. Thank you for shopping with us!\n\nBest regards,\nShopii Team`;
+            await sendEmail(order.buyerId.email, emailSubject, emailText);
+            console.log('Payment confirmation email sent to:', order.buyerId.email);
+          } catch (emailError) {
+            console.error('Failed to send payment confirmation email:', emailError);
+          }
+        }
+      } catch (orderError) {
+        console.error('Error updating order:', orderError);
+      }
+      
+      return res.status(200).json({ 
+        success: true, 
+        message: 'Payment completed successfully',
+        paymentStatus: payment.status
+      });
+    } else if (status === 'cancelled') {
+      // Cập nhật payment thành failed
+      payment.status = 'failed';
+      await payment.save();
+      
+      return res.status(200).json({ 
+        success: true, 
+        message: 'Payment cancelled',
+        paymentStatus: payment.status
+      });
+    } else {
+      return res.status(400).json({ message: 'Invalid status' });
+    }
+  } catch (error) {
+    console.error('Error completing PayPal payment:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+/**
  * Kiểm tra trạng thái thanh toán của đơn hàng
  */
 const checkPaymentStatus = async (req, res) => {
@@ -512,5 +748,7 @@ module.exports = {
   createPayment,
   vietQRCallback,
   payosCallback,
+  paypalSimulate,
+  paypalComplete,
   checkPaymentStatus
 };

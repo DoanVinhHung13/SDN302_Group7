@@ -39,6 +39,7 @@ import NotificationsIcon from "@mui/icons-material/Notifications";
 import SettingsIcon from "@mui/icons-material/Settings";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer"; // Icon cho Voucher
+import PaymentIcon from "@mui/icons-material/Payment"; // Icon cho Payment Management
 
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
@@ -235,6 +236,9 @@ export default function AdminDashboardLayout() {
   const handleOnclickVouchers = () => {
     navigate("/admin/manage-vouchers");
   };
+  const handleOnclickPayments = () => {
+    navigate("/admin/manage-payments");
+  };
 
   const handleOnclickSignout = async () => {
     await AuthenService.logout();
@@ -430,6 +434,21 @@ export default function AdminDashboardLayout() {
                   primary="Manage Vouchers" 
                   primaryTypographyProps={{ 
                     fontWeight: currentPath === "/admin/manage-vouchers" ? 'bold' : 'normal' 
+                  }}
+                />
+              </ListItemButton>
+              
+              <ListItemButton 
+                onClick={handleOnclickPayments}
+                selected={currentPath === "/admin/manage-payments"}
+              >
+                <ListItemIcon sx={{ color: "primary.contrastText" }}>
+                  <PaymentIcon />
+                </ListItemIcon>
+                <ListItemText 
+                  primary="Payment Management" 
+                  primaryTypographyProps={{ 
+                    fontWeight: currentPath === "/admin/manage-payments" ? 'bold' : 'normal' 
                   }}
                 />
               </ListItemButton>

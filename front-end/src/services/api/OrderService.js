@@ -1,142 +1,90 @@
-import { api } from '../index';
+import axios from 'axios';
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:9999';
 
 class OrderService {
-  async createOrder(data) {
+  // Tạo đơn hàng với PayPal trong một bước
+  static async createOrderWithPayPal(orderData) {
     try {
-      const response = await api.post('/order/create_order', data);
+      const token = localStorage.getItem('token');
+      const response = await axios.post(
+        `${API_URL}/api/buyers/orders/paypal`,
+        orderData,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
       return response.data;
     } catch (error) {
+      console.error('Error creating order with PayPal:', error);
       throw error;
     }
   }
 
-  async createPaymentUrl(data) {
+  // Tạo đơn hàng thông thường (không thanh toán)
+  static async createOrder(orderData) {
     try {
-      const response = await api.post('/order/create_payment_url', data);
+      const token = localStorage.getItem('token');
+      const response = await axios.post(
+        `${API_URL}/api/buyers/orders`,
+        orderData,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
       return response.data;
     } catch (error) {
+      console.error('Error creating order:', error);
       throw error;
     }
   }
 
-
-  async getAllOrders({ page = 1, limit = 10, search, sortField, sortOrder, orderStatus, paymentStatus, paymentMethod }) {
+  // Lấy danh sách đơn hàng của buyer
+  static async getBuyerOrders(params = {}) {
     try {
-      const response = await api.get('/order', {
-        params: { page, limit, search, sortField, sortOrder, orderStatus, paymentStatus, paymentMethod },
-      });
+      const token = localStorage.getItem('token');
+      const response = await axios.get(
+        `${API_URL}/api/buyers/orders`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          params
+        }
+      );
       return response.data;
     } catch (error) {
-      throw error;
-    }
-  }
-  async getOrdersByUserId(userId, page = 1, limit = 10, startDate, endDate, orderStatus) {
-    try {
-      const response = await api.get(`/order/user/${userId}`, {
-        params: { page, limit, startDate, endDate, orderStatus },
-      });
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  }
-  async getTopSellingProducts() {
-    try {
-      const result = await api.get('/order/orders/top-selling-products');
-      return result.data;
-    } catch (error) {
-    }
-  }
-  async updateOrder(orderId, data) {
-    try {
-      const response = await api.put(`/order/update_order/${orderId}`, data);
-      return response.data;
-    } catch (error) {
+      console.error('Error fetching buyer orders:', error);
       throw error;
     }
   }
 
-  async getOrderById(orderId) {
+  // Lấy chi tiết đơn hàng
+  static async getOrderDetails(orderId) {
     try {
-      const response = await api.get(`/order/detail_order/${orderId}`);
+      const token = localStorage.getItem('token');
+      const response = await axios.get(
+        `${API_URL}/api/buyers/orders/${orderId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
       return response.data;
     } catch (error) {
-      throw error;
-    }
-  }
-
-  async searchProducts(query) {
-    try {
-      const response = await api.get(`/product/products/search`, { params: { query } });
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  async getPaginatedAllOrders(page, pageSize, keywords, sortBy) {
-    const response = await api.get('/order/get-paginated-orders', {
-      params: {
-        page,
-        pageSize,
-        keywords,
-        sortBy,
-        timestamp: new Date().getTime()
-      }
-    });
-    return response.data;
-  }
-
-  async getProfitByMonth(month) {
-    const response = await api.get('/order/get-profit', {
-      params: {
-        month
-      }
-    });
-    return response.data;
-  }
-
-  async getAllProfitsByYear(year) {
-    const response = await api.get('/order/get-all-profits', {
-      params: {
-        year
-      }
-    });
-    return response.data;
-  }
-
-  async exportProfitsByYear(year) {
-    const response = await api.get(`order/export-profits/?year=${year}`, {
-      responseType: 'blob',
-    });
-
-    // Tạo một URL tạm thời từ blob
-    const url = window.URL.createObjectURL(new Blob([response.data]));
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `Yearly_Profit_Report_${year}.xlsx`); // Tên tệp sẽ được tải xuống
-    document.body.appendChild(link);
-    link.click();
-    link.remove(); // Xóa liên kết sau khi tải xuống
-  }
-
-  async createOrderPayOS (data) {
-    try {
-      const response = await api.post('/order/create_order_payos', data);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  async handlePayOSCallback (queryParams) {
-    try {
-      const response = await api.get(`/order/payos-callback?${queryParams}`);
-      return response.data;
-    } catch (error) {
+      console.error('Error fetching order details:', error);
       throw error;
     }
   }
 }
 
-export default new OrderService();
+export default OrderService;

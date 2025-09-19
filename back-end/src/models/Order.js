@@ -12,6 +12,35 @@ const orderSchema = new Schema(
       enum: ["pending", "processing", "shipping", "shipped", "failed to ship", "rejected"],
       default: "pending",
     },
+    paymentStatus: {
+      type: String,
+      enum: ["pending", "held", "released", "refunded"],
+      default: "pending",
+    },
+    // Thêm các trường mới cho hệ thống eBay trung gian
+    refundReason: {
+      type: String,
+      default: null,
+    },
+    refundAmount: {
+      type: Number,
+      default: null,
+    },
+    refundDate: {
+      type: Date,
+      default: null,
+    },
+    // Thông tin về việc chuyển tiền cho seller
+    paymentReleaseDate: {
+      type: Date,
+      default: null,
+    },
+    // Thông tin dispute nếu có
+    disputeId: {
+      type: Schema.Types.ObjectId,
+      ref: "Dispute",
+      default: null,
+    },
   },
   { timestamps: true }
 );

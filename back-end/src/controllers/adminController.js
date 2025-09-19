@@ -478,14 +478,14 @@ exports.updateProductStatusAdmin = async (req, res) => {
     if (description !== undefined) product.description = description;
     if (price !== undefined) product.price = price;
     if (isAuction !== undefined) product.isAuction = isAuction;
-    
+
     // Only update status if it's provided and valid
     if (status && ["available", "out_of_stock", "pending"].includes(status)) {
       product.status = status;
     }
 
     await product.save();
-    
+
     res.status(200).json({
       success: true,
       message: "Sản phẩm đã được cập nhật thành công",
@@ -696,6 +696,131 @@ exports.getProductReviewsAndStats = async (req, res) => {
   }
 };
 
+// // --- Quản Lý Đơn hàng (Order Management) ---
+
+// /**
+//  * @desc Lấy tất cả đơn hàng
+//  * @route GET /api/admin/orders
+//  * @access Riêng tư (Admin)
+//  */
+/**
+ * @desc Lấy tất cả đơn hàng cho admin (với thông tin chi tiết và payment status)
+ * @route GET /api/admin/orders
+ * @access Riêng tư (Admin)
+ */
+exports.getAllOrdersAdmin = async (req, res) => {
+  try {
+    const { status, paymentStatus, page = 1, limit = 10 } = req.query;
+    const skip = (page - 1) * limit;
+
+    // Build query
+    const query = {};
+    if (
+      status &&
+      [
+        "pending",
+        "processing",
+        "shipping",
+        "shipped",
+        "failed to ship",
+        "rejected",
+      ].includes(status)
+    ) {
+      query.status = status;
+    }
+    if (
+      paymentStatus &&
+      ["pending", "held", "released", "refunded"].includes(paymentStatus)
+    ) {
+      query.paymentStatus = paymentStatus;
+    }
+
+    // 1. Lấy tất cả đơn hàng với thông tin buyer và address
+    const orders = await Order.find(query)
+      .populate("buyerId", "username email fullname")
+      .populate("addressId")
+      .sort({ createdAt: -1, orderDate: -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .lean();
+
+    // 2. Lấy order items cho từng đơn hàng với thông tin sản phẩm và seller
+    const ordersWithDetails = await Promise.all(
+      orders.map(async (order) => {
+        const orderItems = await OrderItem.find({ orderId: order._id })
+          .populate({
+            path: "productId",
+            select: "title image price sellerId categoryId",
+            populate: [
+              { path: "sellerId", select: "username email" },
+              { path: "categoryId", select: "name" },
+            ],
+          })
+          .lean();
+
+        // 3. Lấy shipping info cho từng order item
+        const orderItemIds = orderItems.map((item) => item._id);
+        const shippingInfos = await ShippingInfo.find({
+          orderItemId: { $in: orderItemIds },
+        }).lean();
+
+        // 4. Tạo map shipping info
+        const shippingMap = {};
+        shippingInfos.forEach((info) => {
+          shippingMap[info.orderItemId.toString()] = info;
+        });
+
+        // 5. Gán shipping info vào order items
+        const orderItemsWithShipping = orderItems.map((item) => ({
+          ...item,
+          shippingInfo: shippingMap[item._id.toString()] || null,
+        }));
+
+        // 6. Tính tổng số tiền cho từng seller trong đơn hàng
+        const sellerAmounts = {};
+        orderItemsWithShipping.forEach((item) => {
+          const sellerId = item.productId.sellerId._id.toString();
+          if (!sellerAmounts[sellerId]) {
+            sellerAmounts[sellerId] = {
+              seller: item.productId.sellerId,
+              amount: 0,
+              items: [],
+            };
+          }
+          sellerAmounts[sellerId].amount += item.quantity * item.unitPrice;
+          sellerAmounts[sellerId].items.push({
+            product: item.productId,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            shippingInfo: item.shippingInfo,
+          });
+        });
+
+        return {
+          ...order,
+          orderItems: orderItemsWithShipping,
+          sellerAmounts: Object.values(sellerAmounts),
+        };
+      })
+    );
+
+    const total = await Order.countDocuments(query);
+
+    res.status(200).json({
+      success: true,
+      data: ordersWithDetails,
+      pagination: {
+        total,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        pages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    handleError(res, error, "Lỗi khi lấy danh sách đơn hàng");
+  }
+};
+
 // // --- Quản Lý Danh Mục (Category Management) ---
 
 // /**
@@ -819,6 +944,236 @@ exports.getProductReviewsAndStats = async (req, res) => {
 //     handleError(res, error, "Lỗi khi xóa danh mục");
 //   }
 // };
+
+// --- Quản Lý Thanh Toán (Payment Management) ---
+
+/**
+ * @desc Lấy tất cả đơn hàng cần chuyển tiền cho seller
+ * @route GET /api/admin/orders/payment-management
+ * @access Riêng tư (Admin)
+ */
+exports.getOrdersForPaymentManagement = async (req, res) => {
+  try {
+    const { status, page = 1, limit = 10 } = req.query;
+
+    const query = {
+      status: { $in: ["shipped", "failed to ship"] },
+      paymentStatus: "held",
+    };
+
+    if (status && ["held", "released", "refunded"].includes(status)) {
+      query.paymentStatus = status;
+    }
+
+    const skip = (page - 1) * limit;
+
+    // Find orders with populated data
+    const orders = await Order.find(query)
+      .populate("buyerId", "username email")
+      .populate("addressId")
+      .sort({ orderDate: -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .lean();
+
+    // Get order items with product and seller info
+    const ordersWithDetails = await Promise.all(
+      orders.map(async (order) => {
+        const orderItems = await OrderItem.find({ orderId: order._id })
+          .populate({
+            path: "productId",
+            select: "title image price sellerId",
+            populate: {
+              path: "sellerId",
+              select: "username email",
+            },
+          })
+          .lean();
+
+        // Calculate total amount for each seller
+        const sellerAmounts = {};
+        orderItems.forEach((item) => {
+          const sellerId = item.productId.sellerId._id.toString();
+          if (!sellerAmounts[sellerId]) {
+            sellerAmounts[sellerId] = {
+              seller: item.productId.sellerId,
+              amount: 0,
+              items: [],
+            };
+          }
+          sellerAmounts[sellerId].amount += item.quantity * item.unitPrice;
+          sellerAmounts[sellerId].items.push({
+            product: item.productId,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+          });
+        });
+
+        return {
+          ...order,
+          orderItems,
+          sellerAmounts: Object.values(sellerAmounts),
+        };
+      })
+    );
+
+    const total = await Order.countDocuments(query);
+
+    res.status(200).json({
+      success: true,
+      data: ordersWithDetails,
+      pagination: {
+        total,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        pages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    handleError(res, error, "Lỗi khi lấy danh sách đơn hàng cần chuyển tiền");
+  }
+};
+
+/**
+ * @desc Chuyển tiền cho seller (Admin action)
+ * @route PUT /api/admin/orders/:orderId/release-payment
+ * @access Riêng tư (Admin)
+ */
+exports.releasePaymentToSeller = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { sellerId } = req.body;
+
+    // Find the order
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Đơn hàng không tồn tại",
+      });
+    }
+
+    // Check if order is shipped
+    if (order.status !== "shipped") {
+      return res.status(400).json({
+        success: false,
+        message: "Chỉ có thể chuyển tiền cho đơn hàng đã được giao",
+      });
+    }
+
+    // Check if payment is still held
+    if (order.paymentStatus !== "held") {
+      return res.status(400).json({
+        success: false,
+        message: "Thanh toán đã được xử lý",
+      });
+    }
+
+    // Update payment status to released
+    order.paymentStatus = "released";
+    order.paymentReleaseDate = new Date();
+    await order.save();
+
+    // Get seller info for email notification
+    const seller = await User.findById(sellerId);
+    if (seller) {
+      // Calculate amount for this seller
+      const orderItems = await OrderItem.find({ orderId }).populate({
+        path: "productId",
+        select: "sellerId",
+      });
+
+      let sellerAmount = 0;
+      orderItems.forEach((item) => {
+        if (item.productId.sellerId.toString() === sellerId) {
+          sellerAmount += item.quantity * item.unitPrice;
+        }
+      });
+
+      // Send email notification to seller
+      const emailSubject = "Thanh toán đã được chuyển";
+      const emailText = `Kính gửi ${seller.username},\n\nThanh toán cho đơn hàng ${orderId} đã được chuyển vào tài khoản của bạn.\nSố tiền: ${sellerAmount} VND\n\nTrân trọng,\nShopii Team`;
+
+      try {
+        await sendEmail(seller.email, emailSubject, emailText);
+      } catch (emailError) {
+        console.error("Failed to send payment notification email:", emailError);
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Chuyển tiền cho seller thành công",
+      data: order,
+    });
+  } catch (error) {
+    handleError(res, error, "Lỗi khi chuyển tiền cho seller");
+  }
+};
+
+/**
+ * @desc Hoàn tiền cho buyer (Admin action)
+ * @route PUT /api/admin/orders/:orderId/refund-payment
+ * @access Riêng tư (Admin)
+ */
+exports.refundPaymentToBuyer = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { reason } = req.body;
+
+    // Find the order
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Đơn hàng không tồn tại",
+      });
+    }
+
+    // Check if payment is still held
+    if (order.paymentStatus !== "held") {
+      return res.status(400).json({
+        success: false,
+        message: "Thanh toán đã được xử lý",
+      });
+    }
+
+    // Update payment status to refunded
+    order.paymentStatus = "refunded";
+    order.refundReason = reason || "Không có lý do cụ thể";
+    order.refundAmount = order.totalPrice;
+    order.refundDate = new Date();
+    await order.save();
+
+    // Get buyer info for email notification
+    const buyer = await User.findById(order.buyerId);
+    if (buyer) {
+      // Send email notification to buyer
+      const emailSubject = "Hoàn tiền đơn hàng";
+      const emailText = `Kính gửi ${
+        buyer.username
+      },\n\nĐơn hàng ${orderId} của bạn đã được hoàn tiền.\nSố tiền: ${
+        order.totalPrice
+      } VND\nLý do: ${
+        reason || "Không có lý do cụ thể"
+      }\n\nTrân trọng,\nShopii Team`;
+
+      try {
+        await sendEmail(buyer.email, emailSubject, emailText);
+      } catch (emailError) {
+        console.error("Failed to send refund notification email:", emailError);
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Hoàn tiền cho buyer thành công",
+      data: order,
+    });
+  } catch (error) {
+    handleError(res, error, "Lỗi khi hoàn tiền cho buyer");
+  }
+};
 
 exports.getAdminReport = async (req, res) => {
   const { period } = req.query;

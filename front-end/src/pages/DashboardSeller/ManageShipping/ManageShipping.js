@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
+import { ReloadOutlined } from "@ant-design/icons";
+import { Button, message, Modal, Select, Space, Table, Tag } from "antd";
+import axios from "axios";
+import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import Title from "../Title";
-import { Pagination, Select, Modal, Button, Table, message, Tag, Badge, Space, Popconfirm } from "antd";
-import axios from "axios";
-import { ReloadOutlined } from "@ant-design/icons";
 
 const { Option } = Select;
 
@@ -13,6 +13,7 @@ const statusColors = {
   shipped: "green",
   "failed to ship": "red",
   rejected: "red",
+  processing: "gold",
 };
 
 const ManageShipping = () => {
@@ -30,28 +31,32 @@ const ManageShipping = () => {
   const fetchShippingData = async () => {
     try {
       setLoading(true);
-      const baseURL = process.env.REACT_APP_API_URL || 'http://localhost:9999';
-      console.log('Fetching shipping data from:', `${baseURL}/api/seller/shipping`);
-      
-      const response = await axios.get(
-        `${baseURL}/api/seller/shipping`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      const baseURL = process.env.REACT_APP_API_URL || "http://localhost:9999";
+      console.log(
+        "Fetching shipping data from:",
+        `${baseURL}/api/seller/shipping`
       );
-      
-      console.log('Shipping API response:', response.data);
-      
+
+      const response = await axios.get(`${baseURL}/api/seller/shipping`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      console.log("Shipping API response:", response.data);
+
       if (response.data.success) {
         setShipments(response.data.data);
       } else {
-        message.error(response.data.message || "Failed to load shipping information");
+        message.error(
+          response.data.message || "Failed to load shipping information"
+        );
       }
     } catch (error) {
       console.error("Error fetching shipping data:", error.response || error);
-      message.error("Failed to load shipping information. Please check the console for details.");
+      message.error(
+        "Failed to load shipping information. Please check the console for details."
+      );
     } finally {
       setLoading(false);
     }
@@ -81,10 +86,14 @@ const ManageShipping = () => {
 
     try {
       setLoading(true);
-      const baseURL = process.env.REACT_APP_API_URL || 'http://localhost:9999';
-      
+      const baseURL = process.env.REACT_APP_API_URL || "http://localhost:9999";
+
+      // Use orderItem._id since shippingInfo might be null
+      const shippingId =
+        selectedShipment.shippingInfo?._id || selectedShipment.orderItem._id;
+
       const response = await axios.put(
-        `${baseURL}/api/seller/shipping/${selectedShipment.shippingInfo._id}/status`,
+        `${baseURL}/api/seller/shipping/${shippingId}/status`,
         { status: selectedStatus },
         {
           headers: {
@@ -112,7 +121,10 @@ const ManageShipping = () => {
   // Open status update modal
   const showStatusModal = (record) => {
     setSelectedShipment(record);
-    setSelectedStatus(record.shippingInfo?.status || "shipping");
+    // Use orderItem status if shippingInfo is null
+    setSelectedStatus(
+      record.shippingInfo?.status || record.orderItem?.status || "shipping"
+    );
     setStatusModalVisible(true);
   };
 
@@ -128,41 +140,14 @@ const ManageShipping = () => {
     </Tag>
   );
 
-  // Get button type based on status
-  const getButtonTypeByStatus = (status) => {
-    switch (status) {
-      case "shipping":
-        return "primary";
-      case "shipped":
-        return "success";
-      case "failed to ship":
-        return "danger";
-      default:
-        return "default";
-    }
-  };
-
-  // Get button color based on status for consistent UI
-  const getButtonColorProps = (status) => {
-    switch (status) {
-      case "shipping":
-        return { type: "primary", danger: false };
-      case "shipped":
-        return { type: "success" };
-      case "failed to ship":
-        return { type: "primary", danger: true };
-      default:
-        return { type: "default", danger: false };
-    }
-  };
-
-  // Table columns
+  // Table columns - updated to match actual API response
   const columns = [
     {
       title: "Order ID",
       dataIndex: ["orderItem", "orderId"],
       key: "orderId",
-      render: (orderId) => orderId?._id ? orderId._id.substring(0, 8) + "..." : "N/A",
+      render: (orderId) =>
+        orderId?._id ? orderId._id.substring(0, 8) + "..." : "N/A",
     },
     {
       title: "Product",
@@ -171,9 +156,9 @@ const ManageShipping = () => {
       render: (product) => (
         <div className="flex items-center">
           {product?.image && (
-            <img 
-              src={product.image} 
-              alt={product.title} 
+            <img
+              src={product.image}
+              alt={product.title}
               className="w-12 h-12 object-cover mr-2 rounded"
               onError={(e) => {
                 e.target.onerror = null;
@@ -183,7 +168,9 @@ const ManageShipping = () => {
           )}
           <div>
             <div className="font-medium">{product?.title || "N/A"}</div>
-            <div className="text-xs text-gray-500">{product?.categoryId?.name || ""}</div>
+            <div className="text-xs text-gray-500">
+              {product?.categoryId?.name || ""}
+            </div>
           </div>
         </div>
       ),
@@ -192,7 +179,29 @@ const ManageShipping = () => {
       title: "Buyer",
       dataIndex: ["orderItem", "orderId", "buyerId"],
       key: "buyer",
-      render: (buyer) => buyer?.fullname || buyer?.username || "N/A",
+      render: (buyer) => (
+        <div>
+          <div className="font-medium">
+            {buyer?.fullname || buyer?.username || "N/A"}
+          </div>
+          <div className="text-xs text-gray-500">{buyer?.email || ""}</div>
+        </div>
+      ),
+    },
+    {
+      title: "Shipping Address",
+      dataIndex: ["orderItem", "orderId", "addressId"],
+      key: "address",
+      render: (address) => (
+        <div className="text-xs">
+          <div className="font-medium">{address?.fullName || "N/A"}</div>
+          <div>{address?.phone || ""}</div>
+          <div>{`${address?.street || ""}, ${address?.city || ""}, ${
+            address?.state || ""
+          }`}</div>
+          <div>{address?.country || ""}</div>
+        </div>
+      ),
     },
     {
       title: "Quantity",
@@ -200,66 +209,76 @@ const ManageShipping = () => {
       key: "quantity",
     },
     {
-      title: "Tracking #",
-      dataIndex: ["shippingInfo", "trackingNumber"],
-      key: "trackingNumber",
+      title: "Unit Price",
+      dataIndex: ["orderItem", "unitPrice"],
+      key: "unitPrice",
+      render: (price) => `$${price?.toLocaleString() || 0}`,
     },
     {
-      title: "Carrier",
-      dataIndex: ["shippingInfo", "carrier"],
-      key: "carrier",
-      render: (carrier) => carrier || "GHTK",
+      title: "Total Price",
+      dataIndex: ["orderItem", "orderId", "totalPrice"],
+      key: "totalPrice",
+      render: (price) => `$${price?.toLocaleString() || 0}`,
     },
     {
-      title: "Est. Delivery",
-      dataIndex: ["shippingInfo", "estimatedArrival"],
-      key: "estimatedArrival",
-      render: (date) => formatDate(date),
+      title: "Order Status",
+      dataIndex: ["orderItem", "orderId", "status"],
+      key: "orderStatus",
+      render: (status) => getStatusBadge(status),
+    },
+    {
+      title: "Payment Status",
+      dataIndex: ["orderItem", "orderId", "paymentStatus"],
+      key: "paymentStatus",
+      render: (status) => getStatusBadge(status),
     },
     {
       title: "Shipping Status",
-      dataIndex: ["shippingInfo", "status"],
       key: "shippingStatus",
-      render: (status) => getStatusBadge(status),
+      render: (_, record) => {
+        // Use shippingInfo status if available, otherwise use orderItem status
+        const status = record.shippingInfo?.status || record.orderItem?.status;
+        return getStatusBadge(status);
+      },
     },
-
     {
-      title: "Created At",
-      dataIndex: ["shippingInfo", "createdAt"],
-      key: "createdAt",
+      title: "Order Date",
+      dataIndex: ["orderItem", "orderId", "orderDate"],
+      key: "orderDate",
       render: (date) => formatDate(date),
     },
     {
       title: "Action",
       key: "action",
-      render: (_, record) => (
-        <Space>
-          {record.shippingInfo && (
-            <Button 
-              type={record.shippingInfo.status === "shipped" ? "default" : "primary"} 
+      render: (_, record) => {
+        const currentStatus =
+          record.shippingInfo?.status || record.orderItem?.status;
+        const isCompleted = currentStatus === "shipped";
+
+        return (
+          <Space>
+            <Button
+              type={isCompleted ? "default" : "primary"}
               size="small"
-              ghost={record.shippingInfo.status !== "shipped"}
-              disabled={record.shippingInfo.status === "shipped"}
+              ghost={!isCompleted}
+              disabled={isCompleted}
               onClick={() => showStatusModal(record)}
             >
-              {record.shippingInfo.status === "shipped" ? "Completed" : "Update Status"}
+              {isCompleted ? "Completed" : "Update Status"}
             </Button>
-          )}
-        </Space>
-      ),
+          </Space>
+        );
+      },
     },
   ];
-
-  // Filter out items without shipping info for table display
-  const tableData = shipments.filter(item => item.shippingInfo);
 
   return (
     <div className="w-full">
       <div className="w-full flex flex-col gap-4">
         <div className="w-full flex flex-row justify-between">
-          <Title 
-            title="Shipping Management" 
-            subtitle="Manage order shipping and delivery status" 
+          <Title
+            title="Shipping Management"
+            subtitle="Manage order shipping and delivery status"
           />
           <Button
             type="default"
@@ -273,19 +292,20 @@ const ManageShipping = () => {
 
         <div className="bg-white p-4 rounded-lg shadow">
           <Table
-            dataSource={tableData}
+            dataSource={shipments}
             columns={columns}
-            rowKey={(record) => record.shippingInfo?._id || record.orderItem?._id}
+            rowKey={(record) => record.orderItem?._id}
             loading={loading}
             pagination={{
               current: currentPage,
               pageSize: pageSize,
-              total: tableData.length,
+              total: shipments.length,
               onChange: (page) => setCurrentPage(page),
               onShowSizeChange: (_, size) => setPageSize(size),
               showSizeChanger: true,
               showTotal: (total) => `Total ${total} items`,
             }}
+            scroll={{ x: 1200 }} // Add horizontal scroll for better mobile experience
           />
         </div>
       </div>
@@ -296,7 +316,11 @@ const ManageShipping = () => {
         open={statusModalVisible}
         onCancel={() => setStatusModalVisible(false)}
         footer={[
-          <Button key="cancel" type="default" onClick={() => setStatusModalVisible(false)}>
+          <Button
+            key="cancel"
+            type="default"
+            onClick={() => setStatusModalVisible(false)}
+          >
             Cancel
           </Button>,
           <Button
@@ -306,7 +330,9 @@ const ManageShipping = () => {
             loading={loading}
             onClick={handleUpdateClick}
           >
-            {selectedStatus === "shipped" ? "Complete Shipping" : "Update Status"}
+            {selectedStatus === "shipped"
+              ? "Complete Shipping"
+              : "Update Status"}
           </Button>,
         ]}
       >
@@ -321,7 +347,10 @@ const ManageShipping = () => {
           </p>
           <p>
             <strong>Current Status:</strong>{" "}
-            {getStatusBadge(selectedShipment?.shippingInfo?.status)}
+            {getStatusBadge(
+              selectedShipment?.shippingInfo?.status ||
+                selectedShipment?.orderItem?.status
+            )}
           </p>
         </div>
         <div>
@@ -331,6 +360,7 @@ const ManageShipping = () => {
             onChange={(value) => setSelectedStatus(value)}
             style={{ width: "100%" }}
           >
+            <Option value="pending">PENDING</Option>
             <Option value="shipping">SHIPPING</Option>
             <Option value="shipped">SHIPPED</Option>
             <Option value="failed to ship">FAILED TO SHIP</Option>
@@ -344,12 +374,16 @@ const ManageShipping = () => {
         open={confirmShippedVisible}
         onCancel={() => setConfirmShippedVisible(false)}
         footer={[
-          <Button key="cancel" type="default" onClick={() => setConfirmShippedVisible(false)}>
+          <Button
+            key="cancel"
+            type="default"
+            onClick={() => setConfirmShippedVisible(false)}
+          >
             Cancel
           </Button>,
           <Button
             key="submit"
-            type="success"
+            type="primary"
             loading={loading}
             onClick={updateShippingStatus}
           >
@@ -361,12 +395,13 @@ const ManageShipping = () => {
           Warning: This action cannot be undone!
         </div>
         <p>
-          You are about to mark this shipment as <strong>SHIPPED</strong>. Once updated, 
-          the status cannot be changed again. Are you sure you want to proceed?
+          You are about to mark this shipment as <strong>SHIPPED</strong>. Once
+          updated, the status cannot be changed again. Are you sure you want to
+          proceed?
         </p>
       </Modal>
     </div>
   );
 };
 
-export default ManageShipping; 
+export default ManageShipping;

@@ -1,121 +1,334 @@
-[{
-  "_id": {
-    "$oid": "60d21b4667d0d8992e610c8d"
+[
+  {
+    "_id": { "$oid": "60d21b4667d0d8992e610c8d" },
+    "title": "Smartphone X",
+    "description": "Latest smartphone with advanced features",
+    "price": 1000,
+    "image": "https://cdn.tgdd.vn/Products/Images/42/114115/iphone-x-64gb-bac-750x500.png",
+    "categoryId": { "$oid": "60d21b4667d0d8992e610c85" },
+    "sellerId": { "$oid": "60d21b4667d0d8992e610c89" },
+    "isAuction": true,
+    "createdAt": { "$date": "2023-06-23T10:30:00.000Z" },
+    "updatedAt": { "$date": "2025-07-24T15:07:27.359Z" },
+    "auctionEndTime": null
   },
-  "title": "Smartphone X",
-  "description": "Latest smartphone with advanced features\n",
-  "price": 1000,
-  "image": "https://cdn.tgdd.vn/Products/Images/42/114115/iphone-x-64gb-bac-750x500.png",
-  "categoryId": {
-    "$oid": "60d21b4667d0d8992e610c85"
+  {
+    "_id": { "$oid": "60d21b4667d0d8992e610c8e" },
+    "title": "Designer Watch",
+    "description": "Limited edition luxury watch",
+    "price": 1299.99,
+    "image": "https://www.mrporter.com/variants/images/1647597310328092/ou/w358_q60.jpg",
+    "categoryId": { "$oid": "60d21b4667d0d8992e610c85" },
+    "sellerId": { "$oid": "60d21b4667d0d8992e610c89" },
+    "isAuction": true,
+    "auctionEndTime": { "$date": "2023-07-10T23:59:59.000Z" },
+    "createdAt": { "$date": "2023-06-23T11:45:00.000Z" },
+    "updatedAt": { "$date": "2025-07-24T14:47:00.515Z" }
   },
-  "sellerId": {
-    "$oid": "60d21b4667d0d8992e610c89"
+  {
+    "_id": { "$oid": "60d21b4667d0d8992e610c90" },
+    "title": "Gaming Laptop Pro",
+    "description": "RTX 4080, 32GB RAM, 1TB SSD, 240Hz display",
+    "price": 2200,
+    "image": "https://minhhightech.com/admin/sanpham/Redmi-G-Pro_6088.jpg",
+    "categoryId": { "$oid": "60d21b4667d0d8992e610c86" },
+    "sellerId": { "$oid": "60d21b4667d0d8992e610c89" },
+    "isAuction": true,
+    "auctionEndTime": { "$date": "2025-08-05T18:00:00.000Z" },
+    "createdAt": { "$date": "2025-07-20T09:15:00.000Z" },
+    "updatedAt": { "$date": "2025-07-24T14:48:02.357Z" }
   },
+  {
+    "_id": { "$oid": "60d21b4667d0d8992e610c91" },
+    "title": "Wireless Noise-Canceling Headphones",
+    "description": "50h battery, Hi-Res Audio, multipoint connectivity",
+    "price": 299.99,
+    "image": "https://images.philips.com/is/image/philipsconsumer/491e2dd5e0d1466f8ee5b0cd010451ae?wid=700&hei=700&$pnglarge$",
+    "categoryId": { "$oid": "60d21b4667d0d8992e610c87" },
+    "sellerId": { "$oid": "60d21b4667d0d8992e610c89" },
+    "isAuction": true,
+    "auctionEndTime": null,
+    "createdAt": { "$date": "2025-07-10T14:20:00.000Z" },
+    "updatedAt": { "$date": "2025-07-24T14:48:41.055Z" }
+  },
+  {
+    "_id": { "$oid": "60d21b4667d0d8992e610c92" },
+    "title": "Professional DSLR Camera",
+    "description": "24.2MP, 4K video, 3-inch touchscreen, kit lens included",
+    "price": 1499.95,
+    "image": "https://offshoreclipping.com/wp-content/uploads/2021/12/Best-DSLR-Camera-for-Professional-Photography.jpg",
+    "categoryId": { "$oid": "60d21b4667d0d8992e610c85" },
+    "sellerId": { "$oid": "60d21b4667d0d8992e610c89" },
+    "isAuction": true,
+    "auctionEndTime": { "$date": "2025-07-31T23:59:59.000Z" },
+    "createdAt": { "$date": "2025-07-05T08:45:00.000Z" },
+    "updatedAt": { "$date": "2025-07-24T21:07:48.366Z" }
+  },
+
+  
+  {
+    "_id": { "$oid": "60d21b4667d0d8992e610c93" },
+    "title": "4K Smart TV 55-inch",
+    "description": "Ultra HD resolution, HDR10, Smart apps built-in",
+    "price": 799.99,
+    "image": "https://i.ebayimg.com/images/g/VVcAAeSwNqxok9EB/s-l300.jpg",
+    "categoryId": { "$oid": "60d21b4667d0d8992e610c85" },
+    "sellerId": { "$oid": "60d21b4667d0d8992e610c89" },
+    "isAuction": true,
+    "createdAt": { "$date": "2025-08-01T10:00:00.000Z" },
+    "updatedAt": { "$date": "2025-08-01T10:00:00.000Z" }
+  },
+  {
+    "_id": { "$oid": "60d21b4667d0d8992e610c94" },
+    "title": "Bluetooth Speaker Pro",
+    "description": "360° sound, waterproof, 24h battery life",
+    "price": 120.5,
+    "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQUWyQdCNJAzJOY-7yLBIGeMHKac7zi1-7vag&s",
+    "categoryId": { "$oid": "60d21b4667d0d8992e610c85" },
+    "sellerId": { "$oid": "60d21b4667d0d8992e610c89" },
+    "isAuction": true,
+    "createdAt": { "$date": "2025-08-02T09:30:00.000Z" },
+    "updatedAt": { "$date": "2025-08-02T09:30:00.000Z" }
+  },
+  {
+    "_id": { "$oid": "60d21b4667d0d8992e610c95" },
+    "title": "Air Purifier Max",
+    "description": "HEPA filter, silent mode, suitable for 50m² rooms",
+    "price": 250,
+    "image": "https://i.ebayimg.com/images/g/gM0AAOSwUgxmdEFr/s-l400.jpg",
+    "categoryId": { "$oid": "60d21b4667d0d8992e610c87" },
+    "sellerId": { "$oid": "60d21b4667d0d8992e610c89" },
+    "isAuction": true,
+    "createdAt": { "$date": "2025-08-03T10:10:00.000Z" },
+    "updatedAt": { "$date": "2025-08-03T10:10:00.000Z" }
+  },
+  {
+    "_id": { "$oid": "60d21b4667d0d8992e610c96" },
+    "title": "Men’s Leather Jacket",
+    "description": "Genuine leather, classic fit, durable zipper",
+    "price": 350,
+    "image": "https://i.ebayimg.com/thumbs/images/g/6osAAOSw~y1nFczC/s-l1200.jpg",
+    "categoryId": { "$oid": "60d21b4667d0d8992e610c86" },
+    "sellerId": { "$oid": "60d21b4667d0d8992e610c89" },
+    "isAuction": true,
+    "createdAt": { "$date": "2025-08-04T08:00:00.000Z" },
+    "updatedAt": { "$date": "2025-08-04T08:00:00.000Z" }
+  },
+  {
+    "_id": { "$oid": "60d21b4667d0d8992e610c97" },
+    "title": "Smart Vacuum Cleaner",
+    "description": "Auto cleaning robot with scheduling and remote app",
+    "price": 499.99,
+    "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS3GDji_DUyI4BRwS64Z7xH7HmrenX3ToBRkA&s",
+    "categoryId": { "$oid": "60d21b4667d0d8992e610c87" },
+    "sellerId": { "$oid": "60d21b4667d0d8992e610c89" },
+    "isAuction": true,
+    "createdAt": { "$date": "2025-08-05T08:00:00.000Z" },
+    "updatedAt": { "$date": "2025-08-05T08:00:00.000Z" }
+  },
+  {
+    "_id": { "$oid": "60d21b4667d0d8992e610c98" },
+    "title": "Smartwatch Fit+",
+    "description": "AMOLED screen, GPS, heart rate tracking",
+    "price": 199.99,
+    "image": "https://i.ebayimg.com/images/g/p6cAAeSwU95o8Ux2/s-l300.jpg",
+    "categoryId": { "$oid": "60d21b4667d0d8992e610c85" },
+    "sellerId": { "$oid": "60d21b4667d0d8992e610c89" },
+    "isAuction": true,
+    "createdAt": { "$date": "2025-08-06T08:00:00.000Z" },
+    "updatedAt": { "$date": "2025-08-06T08:00:00.000Z" }
+  },
+  {
+    "_id": { "$oid": "60d21b4667d0d8992e610c99" },
+    "title": "Laptop Air Ultra 14",
+    "description": "Intel i7, 16GB RAM, 512GB SSD, ultra-slim design",
+    "price": 1350,
+    "image": "https://phongvu.vn/cong-nghe/wp-content/uploads/2024/09/Asus-ZenBook-14-air-2-1024x640.jpg",
+    "categoryId": { "$oid": "60d21b4667d0d8992e610c86" },
+    "sellerId": { "$oid": "60d21b4667d0d8992e610c89" },
+    "isAuction": true,
+    "createdAt": { "$date": "2025-08-07T08:00:00.000Z" },
+    "updatedAt": { "$date": "2025-08-07T08:00:00.000Z" }
+  },
+  {
+    "_id": { "$oid": "60d21b4667d0d8992e610100" },
+    "title": "Espresso Coffee Machine",
+    "description": "19-bar pressure, auto shut-off, milk frother included",
+    "price": 270,
+    "image": "https://assets.epicurious.com/photos/62741684ef40ea9d3866a0be/3:2/w_4998,h_3332,c_limit/breville-bambino-espresso-maker_HERO_050422_8449_VOG_Badge_final.jpg",
+    "categoryId": { "$oid": "60d21b4667d0d8992e610c87" },
+    "sellerId": { "$oid": "60d21b4667d0d8992e610c89" },
+    "isAuction": true,
+    "createdAt": { "$date": "2025-08-08T08:00:00.000Z" },
+    "updatedAt": { "$date": "2025-08-08T08:00:00.000Z" }
+  },
+  {
+    "_id": { "$oid": "60d21b4667d0d8992e610101" },
+    "title": "Microwave Oven 30L",
+    "description": "Stainless steel design, 900W power, defrost function",
+    "price": 160,
+    "image": "https://m.media-amazon.com/images/I/71hSXx1Op5L.jpg",
+    "categoryId": { "$oid": "60d21b4667d0d8992e610c87" },
+    "sellerId": { "$oid": "60d21b4667d0d8992e610c89" },
+    "isAuction": true,
+    "createdAt": { "$date": "2025-08-09T08:00:00.000Z" },
+    "updatedAt": { "$date": "2025-08-09T08:00:00.000Z" }
+  },
+  {
+    "_id": { "$oid": "60d21b4667d0d8992e610102" },
+    "title": "LED Desk Lamp",
+    "description": "Touch control, adjustable brightness, USB charging",
+    "price": 39.99,
+    "image": "https://m.media-amazon.com/images/I/91k7XqTwnAL._AC_SL1500_.jpg",
+    "categoryId": { "$oid": "60d21b4667d0d8992e610c87" },
+    "sellerId": { "$oid": "60d21b4667d0d8992e610c89" },
+    "isAuction": true,
+    "createdAt": { "$date": "2025-08-10T08:00:00.000Z" },
+    "updatedAt": { "$date": "2025-08-10T08:00:00.000Z" }
+  }
+,
+{
+  "_id": { "$oid": "60d21b4667d0d8992e610103" },
+  "title": "Air Fryer 5L",
+  "description": "Rapid air technology, oil-free healthy cooking",
+  "price": 180,
+  "image": "https://www.wonderchef.com/cdn/shop/files/6807434.jpg?v=1757414999",
+  "categoryId": { "$oid": "60d21b4667d0d8992e610c87" },
+  "sellerId": { "$oid": "60d21b4667d0d8992e610c89" },
   "isAuction": true,
-  "createdAt": {
-    "$date": "2023-06-23T10:30:00.000Z"
-  },
-  "updatedAt": {
-    "$date": "2025-07-24T15:07:27.359Z"
-  },
-  "auctionEndTime": null
+  "createdAt": { "$date": "2025-08-11T08:00:00.000Z" },
+  "updatedAt": { "$date": "2025-08-11T08:00:00.000Z" }
 },
 {
-  "_id": {
-    "$oid": "60d21b4667d0d8992e610c8e"
-  },
-  "title": "Designer Watch",
-  "description": "Limited edition luxury watch",
-  "price": 1299.99,
-  "image": "https://www.mrporter.com/variants/images/1647597310328092/ou/w358_q60.jpg",
-  "categoryId": {
-    "$oid": "60d21b4667d0d8992e610c85"
-  },
-  "sellerId": {
-    "$oid": "60d21b4667d0d8992e610c89"
-  },
+  "_id": { "$oid": "60d21b4667d0d8992e610104" },
+  "title": "Wireless Keyboard and Mouse Set",
+  "description": "2.4GHz connection, silent keys, ergonomic design",
+  "price": 45,
+  "image": "https://m.media-amazon.com/images/I/71smPHNDQkL.jpg",
+  "categoryId": { "$oid": "60d21b4667d0d8992e610c85" },
+  "sellerId": { "$oid": "60d21b4667d0d8992e610c89" },
   "isAuction": true,
-  "auctionEndTime": {
-    "$date": "2023-07-10T23:59:59.000Z"
-  },
-  "createdAt": {
-    "$date": "2023-06-23T11:45:00.000Z"
-  },
-  "updatedAt": {
-    "$date": "2025-07-24T14:47:00.515Z"
-  }
+  "createdAt": { "$date": "2025-08-12T08:00:00.000Z" },
+  "updatedAt": { "$date": "2025-08-12T08:00:00.000Z" }
 },
 {
-  "_id": {
-    "$oid": "60d21b4667d0d8992e610c90"
-  },
-  "title": "Gaming Laptop Pro",
-  "description": "RTX 4080, 32GB RAM, 1TB SSD, 240Hz display",
-  "price": 2200,
-  "image": "https://minhhightech.com/admin/sanpham/Redmi-G-Pro_6088.jpg",
-  "categoryId": {
-    "$oid": "60d21b4667d0d8992e610c86"
-  },
-  "sellerId": {
-    "$oid": "60d21b4667d0d8992e610c89"
-  },
+  "_id": { "$oid": "60d21b4667d0d8992e610105" },
+  "title": "Gaming Headset 7.1",
+  "description": "RGB lighting, noise-canceling mic, surround sound",
+  "price": 99,
+  "image": "https://product.hstatic.net/200000637319/product/htb1vesgrpxxxxbsxfxxq6xxfxxxc-1_fa4a6781398c44b5af41ee59c78a03e8_master.jpg",
+  "categoryId": { "$oid": "60d21b4667d0d8992e610c85" },
+  "sellerId": { "$oid": "60d21b4667d0d8992e610c89" },
   "isAuction": true,
-  "auctionEndTime": {
-    "$date": "2025-08-05T18:00:00.000Z"
-  },
-  "createdAt": {
-    "$date": "2025-07-20T09:15:00.000Z"
-  },
-  "updatedAt": {
-    "$date": "2025-07-24T14:48:02.357Z"
-  }
+  "createdAt": { "$date": "2025-08-13T08:00:00.000Z" },
+  "updatedAt": { "$date": "2025-08-13T08:00:00.000Z" }
 },
 {
-  "_id": {
-    "$oid": "60d21b4667d0d8992e610c91"
-  },
-  "title": "Wireless Noise-Canceling Headphones",
-  "description": "50h battery, Hi-Res Audio, multipoint connectivity",
-  "price": 299.99,
-  "image": "https://images.philips.com/is/image/philipsconsumer/491e2dd5e0d1466f8ee5b0cd010451ae?wid=700&hei=700&$pnglarge$",
-  "categoryId": {
-    "$oid": "60d21b4667d0d8992e610c87"
-  },
-  "sellerId": {
-    "$oid": "60d21b4667d0d8992e610c89"
-  },
+  "_id": { "$oid": "60d21b4667d0d8992e610106" },
+  "title": "Men’s Casual Sneakers",
+  "description": "Breathable, lightweight, anti-slip sole",
+  "price": 75,
+  "image": "https://media.crocs.com/images/f_auto,q_auto,dpr_auto/marketing/2507_EMEA_HD_ImageTileUpdate_ImageTile_New_For_Him/Crocs",
+  "categoryId": { "$oid": "60d21b4667d0d8992e610c86" },
+  "sellerId": { "$oid": "60d21b4667d0d8992e610c89" },
   "isAuction": true,
-  "auctionEndTime": null,
-  "createdAt": {
-    "$date": "2025-07-10T14:20:00.000Z"
-  },
-  "updatedAt": {
-    "$date": "2025-07-24T14:48:41.055Z"
-  }
+  "createdAt": { "$date": "2025-08-14T08:00:00.000Z" },
+  "updatedAt": { "$date": "2025-08-14T08:00:00.000Z" }
 },
 {
-  "_id": {
-    "$oid": "60d21b4667d0d8992e610c92"
-  },
-  "title": "Professional DSLR Camera",
-  "description": "24.2MP, 4K video, 3-inch touchscreen, kit lens included",
-  "price": 1499.95,
-  "image": "https://offshoreclipping.com/wp-content/uploads/2021/12/Best-DSLR-Camera-for-Professional-Photography.jpg",
-  "categoryId": {
-    "$oid": "60d21b4667d0d8992e610c85"
-  },
-  "sellerId": {
-    "$oid": "60d21b4667d0d8992e610c89"
-  },
+  "_id": { "$oid": "60d21b4667d0d8992e610107" },
+  "title": "Smart Light Bulb RGB",
+  "description": "16 million colors, voice control, app integration",
+  "price": 22,
+  "image": "https://smartliving.vn/wp-content/uploads/2021/05/z2922035664546_a7608791df587d656cebb7cfaa3f42d7.jpg",
+  "categoryId": { "$oid": "60d21b4667d0d8992e610c87" },
+  "sellerId": { "$oid": "60d21b4667d0d8992e610c89" },
   "isAuction": true,
-  "auctionEndTime": {
-    "$date": "2025-07-31T23:59:59.000Z"
-  },
-  "createdAt": {
-    "$date": "2025-07-05T08:45:00.000Z"
-  },
-  "updatedAt": {
-    "$date": "2025-07-24T21:07:48.366Z"
-  }
-}]
+  "createdAt": { "$date": "2025-08-15T08:00:00.000Z" },
+  "updatedAt": { "$date": "2025-08-15T08:00:00.000Z" }
+},
+{
+  "_id": { "$oid": "60d21b4667d0d8992e610108" },
+  "title": "Smartphone Z Pro",
+  "description": "6.7-inch OLED display, 128GB storage, 5000mAh battery",
+  "price": 899,
+  "image": "https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/s/a/samsung-galaxy-z-fold-7-xanh.jpg",
+  "categoryId": { "$oid": "60d21b4667d0d8992e610c85" },
+  "sellerId": { "$oid": "60d21b4667d0d8992e610c89" },
+  "isAuction": true,
+  "createdAt": { "$date": "2025-08-16T08:00:00.000Z" },
+  "updatedAt": { "$date": "2025-08-16T08:00:00.000Z" }
+},
+{
+  "_id": { "$oid": "60d21b4667d0d8992e610109" },
+  "title": "Robot Vacuum Mini",
+  "description": "Slim design, self-charging, multiple cleaning modes",
+  "price": 310,
+  "image": "https://m.media-amazon.com/images/I/718yLzO7J+L._AC_UF894,1000_QL80_.jpg",
+  "categoryId": { "$oid": "60d21b4667d0d8992e610c87" },
+  "sellerId": { "$oid": "60d21b4667d0d8992e610c89" },
+  "isAuction": true,
+  "createdAt": { "$date": "2025-08-17T08:00:00.000Z" },
+  "updatedAt": { "$date": "2025-08-17T08:00:00.000Z" }
+},
+{
+  "_id": { "$oid": "60d21b4667d0d8992e610110" },
+  "title": "Women’s Summer Dress",
+  "description": "Light fabric, floral pattern, available in multiple sizes",
+  "price": 65,
+  "image": "https://m.media-amazon.com/images/I/81yzyJMIf9L._AC_UY1100_.jpg",
+  "categoryId": { "$oid": "60d21b4667d0d8992e610c86" },
+  "sellerId": { "$oid": "60d21b4667d0d8992e610c89" },
+  "isAuction": true,
+  "createdAt": { "$date": "2025-08-18T08:00:00.000Z" },
+  "updatedAt": { "$date": "2025-08-18T08:00:00.000Z" }
+},
+{
+  "_id": { "$oid": "60d21b4667d0d8992e610111" },
+  "title": "Air Conditioner 1.5HP",
+  "description": "Energy saving, fast cooling, remote control",
+  "price": 590,
+  "image": "https://sieuthimaylanh.com/uploads/product/03_2023/may-lanh-aqua-inverter-1-5-hp-1-5-ngua-aqa-rv13qc.webp",
+  "categoryId": { "$oid": "60d21b4667d0d8992e610c87" },
+  "sellerId": { "$oid": "60d21b4667d0d8992e610c89" },
+  "isAuction": true,
+  "createdAt": { "$date": "2025-08-19T08:00:00.000Z" },
+  "updatedAt": { "$date": "2025-08-19T08:00:00.000Z" }
+},
+{
+  "_id": { "$oid": "60d21b4667d0d8992e610112" },
+  "title": "Smart Refrigerator 350L",
+  "description": "Inverter technology, dual cooling, LED display",
+  "price": 900,
+  "image": "https://images.samsung.com/is/image/samsung/p6pim/in/feature/165516373/in-feature-moist-freshness-542989464?$FB_TYPE_A_MO_JPG$",
+  "categoryId": { "$oid": "60d21b4667d0d8992e610c87" },
+  "sellerId": { "$oid": "60d21b4667d0d8992e610c89" },
+  "isAuction": true,
+  "createdAt": { "$date": "2025-08-20T08:00:00.000Z" },
+  "updatedAt": { "$date": "2025-08-20T08:00:00.000Z" }
+},
+{
+  "_id": { "$oid": "60d21b4667d0d8992e610113" },
+  "title": "Wireless Earbuds Plus",
+  "description": "Bluetooth 5.3, ANC, 30h playtime, fast charging",
+  "price": 120,
+  "image": "https://m.media-amazon.com/images/I/614bL2rQtcL.jpg",
+  "categoryId": { "$oid": "60d21b4667d0d8992e610c85" },
+  "sellerId": { "$oid": "60d21b4667d0d8992e610c89" },
+  "isAuction": true,
+  "createdAt": { "$date": "2025-08-21T08:00:00.000Z" },
+  "updatedAt": { "$date": "2025-08-21T08:00:00.000Z" }
+},
+{
+  "_id": { "$oid": "60d21b4667d0d8992e610114" },
+  "title": "Smart Door Lock",
+  "description": "Fingerprint, PIN, and mobile app control",
+  "price": 350,
+  "image": "https://yaleonline.in/cdn/shop/products/3_81f1fa71-fe33-40c6-afa8-fc7243435f3f.jpg?v=1740809042&width=1946",
+  "categoryId": { "$oid": "60d21b4667d0d8992e610c87" },
+  "sellerId": { "$oid": "60d21b4667d0d8992e610c89" },
+  "isAuction": true,
+  "createdAt": { "$date": "2025-08-22T08:00:00.000Z" },
+  "updatedAt": { "$date": "2025-08-22T08:00:00.000Z" }
+}
+]

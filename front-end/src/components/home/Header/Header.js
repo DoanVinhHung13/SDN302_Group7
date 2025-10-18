@@ -8,7 +8,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { logout } from "../../../features/auth/authSlice";
 import ebayLogo from "../../../assets/images/logo-ebay.jpg";
-import Image from "../../designLayouts/Image";
+
 import {
   resetUserInfo,
   setProducts,
@@ -21,14 +21,16 @@ const Header = () => {
   const [category, setCategory] = useState(false);
   const [showUser, setShowUser] = useState(false);
   const [showCategories, setShowCategories] = useState(false);
-  const [allProducts, setAllProducts] = useState([]);
+  const [allCategories, setAllCategories] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [userName, setUserName] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(
     !!localStorage.getItem("accessToken")
   );
-  const [selectedCategory, setSelectedCategory] = useState("All Categories");
+  const [selectedCategoryId, setSelectedCategoryId] = useState(null);
+  const [selectedCategoryName, setSelectedCategoryName] =
+    useState("All Categories");
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -54,18 +56,6 @@ const Header = () => {
     (total, item) => total + item.quantity,
     0
   );
-
-  const categories = [
-    "All Categories",
-    "Electronics",
-    "Fashion",
-    "Home & Garden",
-    "Motors",
-    "Sports",
-    "Books",
-    "Health & Beauty",
-    "Toys & Games",
-  ];
 
   useEffect(() => {
     let ResponsiveMenu = () => {
@@ -102,21 +92,24 @@ const Header = () => {
     setIsLoggedIn(!!token);
   }, []);
 
-  const fetchProducts = useCallback(async () => {
+  // Fetch categories from API
+  const fetchCategories = useCallback(async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/products`);
-      const formattedProducts = response.data.data.map((product) => ({
-        ...product,
-        name: product.title,
-        image: product.image,
-      }));
-
-      dispatch(setProducts(formattedProducts));
-      setAllProducts(formattedProducts);
+      const response = await axios.get(`${API_BASE_URL}/api/categories`);
+      const categories = response.data.data || [];
+      console.log("Categories fetched:", categories);
+      setAllCategories([{ _id: null, name: "All Categories" }, ...categories]);
     } catch (error) {
-      console.error("Failed to fetch products:", error);
+      console.error("Failed to fetch categories:", error);
+      // Fallback categories nếu API fail
+      setAllCategories([
+        { _id: null, name: "All Categories" },
+        { _id: "1", name: "Electronics" },
+        { _id: "2", name: "Fashion" },
+        { _id: "3", name: "Home & Garden" },
+      ]);
     }
-  }, [API_BASE_URL, dispatch]);
+  }, [API_BASE_URL]);
 
   // Fetch user data function
   const fetchUserData = useCallback(async () => {
@@ -145,36 +138,61 @@ const Header = () => {
   }, [API_BASE_URL, dispatch]);
 
   useEffect(() => {
-    fetchProducts();
+    console.log("Header useEffect triggered");
+    fetchCategories();
 
     if (isLoggedIn) {
       fetchUserData();
     }
-  }, [isLoggedIn, fetchProducts, fetchUserData]);
+  }, [isLoggedIn, fetchCategories, fetchUserData]);
 
+  // Fetch search results from API
+  const fetchSearchResults = useCallback(
+    async (query) => {
+      if (!query.trim()) {
+        setFilteredProducts([]);
+        return;
+      }
+
+      try {
+        let url = `${API_BASE_URL}/api/products?search=${encodeURIComponent(
+          query
+        )}&limit=8`;
+
+        if (selectedCategoryId) {
+          url += `&categories=${selectedCategoryId}`;
+        }
+
+        const response = await axios.get(url);
+        const products = response.data.data || [];
+
+        const formatted = products.map((item) => ({
+          _id: item._id,
+          image: item.image,
+          name: item.title || "Untitled Product",
+          price: item.price,
+          description: item.description,
+          category: item.categoryId?.name || "",
+          seller: item.sellerId?.username || "",
+        }));
+
+        setFilteredProducts(formatted);
+      } catch (error) {
+        console.error("Failed to fetch search results:", error);
+        setFilteredProducts([]);
+      }
+    },
+    [API_BASE_URL, selectedCategoryId]
+  );
+
+  // Debounce search
   useEffect(() => {
-    const filtered = allProducts
-      .filter(
-        (item) =>
-          (item.title &&
-            item.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
-          (item.name &&
-            item.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-          (item.description &&
-            item.description.toLowerCase().includes(searchQuery.toLowerCase()))
-      )
-      .map((item) => ({
-        _id: item._id,
-        image: item.image,
-        name: item.name || item.title || "Untitled Product",
-        price: item.price,
-        description: item.description,
-        category: item.categoryId?.name || "",
-        seller: item.sellerId?.username || "",
-      }));
+    const timer = setTimeout(() => {
+      fetchSearchResults(searchQuery);
+    }, 300);
 
-    setFilteredProducts(filtered);
-  }, [searchQuery, allProducts]);
+    return () => clearTimeout(timer);
+  }, [searchQuery, selectedCategoryId, fetchSearchResults]);
 
   const handleLogout = async () => {
     try {
@@ -226,8 +244,23 @@ const Header = () => {
   };
 
   const handleCategorySelect = (category) => {
-    setSelectedCategory(category);
+    console.log("Category selected:", category);
+    setSelectedCategoryId(category._id);
+    setSelectedCategoryName(category.name);
     setShowCategories(false);
+  };
+
+  const handleSearchButtonClick = () => {
+    if (searchQuery.trim()) {
+      const params = new URLSearchParams();
+      params.append("search", searchQuery);
+      if (selectedCategoryId) {
+        params.append("categories", selectedCategoryId);
+      }
+      navigate(`/?${params.toString()}`);
+      setSearchQuery("");
+      setFilteredProducts([]);
+    }
   };
 
   return (
@@ -383,50 +416,82 @@ const Header = () => {
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/">
-            <div className="transform hover:scale-105 transition-transform duration-300">
-              <Image className="w-20 object-cover" imgSrc={ebayLogo} />
-            </div>
+          <Link
+            to="/"
+            onClick={(e) => {
+              console.log("Logo clicked");
+              setShowCategories(false);
+              setSearchQuery("");
+              setFilteredProducts([]);
+              setSelectedCategoryId(null);
+              setSelectedCategoryName("All Categories");
+              // Force reload if already on home page
+              if (location.pathname === "/") {
+                e.preventDefault();
+                window.location.href = "/";
+              }
+            }}
+            className="flex-shrink-0 cursor-pointer"
+          >
+            <img
+              src={ebayLogo}
+              alt="eBay Logo"
+              className="w-20 h-auto object-contain hover:opacity-80 transition-opacity"
+            />
           </Link>
 
           {/* Search Bar */}
-          <div className="flex-1 max-w-4xl mx-8">
-            <div className="flex items-center border-2 border-gray-300 rounded overflow-hidden hover:border-blue-500 focus-within:border-blue-500">
+          <div className="flex-1 max-w-4xl mx-8 relative z-40">
+            <div className="flex items-center border-2 border-gray-300 rounded overflow-visible hover:border-blue-500 focus-within:border-blue-500">
               {/* Category Dropdown */}
               <div ref={categoryRef} className="relative">
                 <button
-                  onClick={() => setShowCategories(!showCategories)}
+                  onClick={() => {
+                    console.log(
+                      "Category button clicked, showCategories:",
+                      !showCategories
+                    );
+                    setShowCategories(!showCategories);
+                  }}
                   className="flex items-center px-4 py-3 bg-gray-50 border-r border-gray-300 text-gray-700 hover:bg-gray-100 min-w-max"
                 >
                   <span className="text-sm font-medium truncate max-w-32">
-                    {selectedCategory}
+                    {selectedCategoryName}
                   </span>
                   <MdKeyboardArrowDown className="ml-2 text-gray-500" />
                 </button>
-
-                {showCategories && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="absolute top-full left-0 right-0 bg-white border border-gray-300 shadow-lg z-50 max-h-80 overflow-y-auto"
-                  >
-                    {categories.map((cat, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleCategorySelect(cat)}
-                        className={`w-full text-left px-4 py-2 hover:bg-blue-50 text-sm ${
-                          selectedCategory === cat
-                            ? "bg-blue-50 text-blue-600"
-                            : "text-gray-700"
-                        }`}
-                      >
-                        {cat}
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
               </div>
+
+              {/* Category Dropdown Menu - Outside overflow */}
+              {showCategories && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute top-full left-0 bg-white border border-gray-300 shadow-xl z-[9999] max-h-80 overflow-y-auto w-56 mt-1"
+                  style={{
+                    left:
+                      categoryRef.current?.getBoundingClientRect().left -
+                      (categoryRef.current
+                        ?.closest(".max-w-4xl")
+                        ?.getBoundingClientRect().left || 0),
+                  }}
+                >
+                  {allCategories.map((cat) => (
+                    <button
+                      key={cat._id || "all"}
+                      onClick={() => handleCategorySelect(cat)}
+                      className={`w-full text-left px-4 py-2 hover:bg-blue-50 text-sm ${
+                        selectedCategoryId === cat._id
+                          ? "bg-blue-50 text-blue-600"
+                          : "text-gray-700"
+                      }`}
+                    >
+                      {cat.name}
+                    </button>
+                  ))}
+                </motion.div>
+              )}
 
               {/* Search Input */}
               <div className="flex-1 relative">
@@ -434,6 +499,11 @@ const Header = () => {
                   type="text"
                   value={searchQuery}
                   onChange={handleSearch}
+                  onKeyPress={(e) => {
+                    if (e.key === "Enter") {
+                      handleSearchButtonClick();
+                    }
+                  }}
                   placeholder="Search for anything"
                   className="w-full px-4 py-3 outline-none text-gray-700 placeholder-gray-500"
                 />
@@ -446,12 +516,15 @@ const Header = () => {
                     transition={{ duration: 0.3 }}
                     className="absolute top-full left-0 right-0 bg-white border border-gray-300 shadow-xl max-h-96 overflow-y-auto z-50"
                   >
-                    {filteredProducts.slice(0, 8).map((item) => (
+                    {filteredProducts.map((item) => (
                       <div
                         key={item._id}
                         onClick={() => {
-                          navigate(`/product/${item._id}`, { state: { item } });
+                          navigate(`/auth/product/${item._id}`, {
+                            state: { item },
+                          });
                           setSearchQuery("");
+                          setFilteredProducts([]);
                         }}
                         className="flex items-center p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
                       >
@@ -482,7 +555,10 @@ const Header = () => {
               </div>
 
               {/* Search Button */}
-              <button className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors">
+              <button
+                onClick={handleSearchButtonClick}
+                className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors"
+              >
                 Search
               </button>
             </div>
@@ -490,8 +566,6 @@ const Header = () => {
 
           {/* Right Actions */}
           <div className="flex items-center space-x-4">
-            {/* Chat */}
-
             {/* Mobile Menu */}
             <button
               onClick={() => setSidenav(!sidenav)}

@@ -22,6 +22,7 @@ import {
   Grid,
   IconButton,
   Paper,
+  Pagination,
   Rating,
   Skeleton,
   Tooltip,
@@ -33,7 +34,7 @@ import axios from "axios";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 
 const Home = () => {
@@ -43,10 +44,16 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [addingToCart, setAddingToCart] = useState({});
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
   const [sortOrder, setSortOrder] = useState("default");
   const [favoriteProducts, setFavoriteProducts] = useState({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const location = useLocation();
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -65,11 +72,9 @@ const Home = () => {
 
     if (paymentStatus === "paid") {
       toast.success("Payment successful!");
-      // Remove query parameter after displaying the notification
       navigate("/", { replace: true });
     } else if (paymentStatus === "failed") {
       toast.error("Payment failed!");
-      // Remove query parameter after displaying the notification
       navigate("/", { replace: true });
     }
   }, [navigate]);
@@ -92,30 +97,45 @@ const Home = () => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      let url = `${API_BASE_URL}/api/products`;
+      const params = new URLSearchParams(window.location.search);
+      const searchParam = params.get("search");
+
+      let url = `${API_BASE_URL}/api/products?page=${currentPage}&limit=9`;
+
+      // Add search parameter if exists
+      if (searchParam) {
+        url += `&search=${encodeURIComponent(searchParam)}`;
+      }
 
       if (selectedCategories.length > 0) {
         const categoryIds = selectedCategories.join(",");
-        url += `?categories=${categoryIds}`;
+        url += `&categories=${categoryIds}`;
+      }
+
+      if (minPrice) url += `&minPrice=${minPrice}`;
+      if (maxPrice) url += `&maxPrice=${maxPrice}`;
+
+      // Gửi sort order lên server (convert dashes to underscores)
+      if (sortOrder !== "default") {
+        const serverSort = sortOrder.replace(/-/g, '_');
+        url += `&sort=${serverSort}`;
       }
 
       const response = await axios.get(url);
+      const { data, pagination } = response.data;
+      setTotalPages(pagination?.totalPages || 1);
 
-      const formattedProducts = response.data.data.map((product) => {
+      const formattedProducts = data.map((product) => {
         let imageUrl;
-        if (product.image) {
-          // If image is a full URL, use it directly
-          if (
-            product.image.startsWith("http://") ||
-            product.image.startsWith("https://")
-          ) {
-            imageUrl = product.image;
-          } else {
-            // Otherwise, concat with API path
-            imageUrl = `${API_BASE_URL}/uploads/${product.image}`;
-          }
+
+        const img = String(product.image || "").trim();
+
+        if (img.startsWith("http://") || img.startsWith("https://")) {
+          imageUrl = img;
+        } else if (img) {
+          imageUrl = `${API_BASE_URL}/uploads/${img}`;
         } else {
-          imageUrl = "https://via.placeholder.com/300";
+          imageUrl = "https://via.placeholder.com/300?text=No+Image";
         }
 
         return {
@@ -123,8 +143,8 @@ const Home = () => {
           imageUrl,
           categoryName: product.categoryId?.name || "Uncategorized",
           sellerName: product.sellerId?.username || "Unknown Seller",
-          rating: product.rating || 0, // Extract rating from product or default to 0
-          reviewCount: product.reviewCount || 0, // Extract review count or default to 0
+          rating: product.rating || 0,
+          reviewCount: product.reviewCount || 0,
         };
       });
 
@@ -137,22 +157,40 @@ const Home = () => {
     }
   };
 
+  // Read URL query params whenever location changes
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const categoriesParam = params.get("categories");
+
+    if (categoriesParam) {
+      const categoryIds = categoriesParam.split(",").filter(id => id);
+      setSelectedCategories(categoryIds);
+    } else {
+      setSelectedCategories([]);
+    }
+    
+    setCurrentPage(1);
+  }, [location.search]);
+
   useEffect(() => {
     fetchCategories();
-    fetchProducts();
   }, []);
 
-  // When selected categories change, filter products again
+  // Fetch products when category, page, price changes
   useEffect(() => {
     fetchProducts();
-  }, [selectedCategories]);
+  }, [selectedCategories, currentPage, minPrice, maxPrice]);
+
+  // Reset page to 1 when filters change (nhưng không khi currentPage thay đổi)
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCategories, minPrice, maxPrice]);
 
   const handleImageError = (e) => {
     e.target.onerror = null;
     e.target.src = "https://via.placeholder.com/300?text=No+Image";
   };
 
-  // Handle when selecting/deselecting categories
   const handleCategoryChange = (categoryId) => {
     setSelectedCategories((prev) => {
       if (prev.includes(categoryId)) {
@@ -163,7 +201,6 @@ const Home = () => {
     });
   };
 
-  // Add product to cart
   const handleAddToCart = async (productId) => {
     if (!isAuthenticated) {
       toast.info("Please sign in to add products to cart");
@@ -171,10 +208,8 @@ const Home = () => {
       return;
     }
 
-    // Find the product to check if it belongs to the seller
     const productToAdd = products.find((p) => p._id === productId);
 
-    // Prevent seller from adding their own product
     if (
       user?.role === "seller" &&
       productToAdd &&
@@ -206,7 +241,6 @@ const Home = () => {
     }
   };
 
-  // Toggle favorite product
   const handleToggleFavorite = (productId) => {
     if (!isAuthenticated) {
       toast.info("Please sign in to favorite products");
@@ -218,7 +252,6 @@ const Home = () => {
       [productId]: !prev[productId],
     }));
 
-    // This is just for demonstration - normally would call an API
     if (!favoriteProducts[productId]) {
       toast.success("Added to favorites!");
     } else {
@@ -226,41 +259,32 @@ const Home = () => {
     }
   };
 
-  // Handle product click to view details
   const handleProductClick = (product) => {
     navigate(`/auth/product/${product._id}`, { state: { item: product } });
   };
 
-  // Handle sort order change
   const handleSortChange = (order) => {
     setSortOrder(order);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Sort products based on selected order
+  const handlePageChange = (event, page) => {
+    setCurrentPage(page);
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }, 50);
+  };
+
+  // Fetch products khi sort order thay đổi
+  useEffect(() => {
+    setCurrentPage(1); // Reset về trang 1 khi sort
+  }, [sortOrder]);
+
   const getSortedProducts = () => {
-    if (sortOrder === "default") {
-      return [...products];
-    } else if (sortOrder === "price-asc") {
-      return [...products].sort((a, b) => a.price - b.price);
-    } else if (sortOrder === "price-desc") {
-      return [...products].sort((a, b) => b.price - a.price);
-    } else if (sortOrder === "name-asc") {
-      return [...products].sort((a, b) => {
-        const nameA = a.title || "";
-        const nameB = b.title || "";
-        return nameA.localeCompare(nameB);
-      });
-    } else if (sortOrder === "name-desc") {
-      return [...products].sort((a, b) => {
-        const nameA = a.title || "";
-        const nameB = b.title || "";
-        return nameB.localeCompare(nameA);
-      });
-    }
+    // Sort đã được xử lý trên server, không cần sort lại client-side
     return [...products];
   };
 
-  // Loading skeleton for products
   const ProductSkeleton = () => (
     <>
       {Array.from(new Array(8)).map((_, index) => (
@@ -778,345 +802,383 @@ const Home = () => {
               </Paper>
             </motion.div>
           ) : (
-            <Grid container spacing={3}>
-              {sortedProducts.map((product, index) => (
-                <Grid item xs={12} sm={6} md={4} key={product._id}>
-                  <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{
-                      duration: 0.5,
-                      delay: index * 0.08,
-                      ease: [0.25, 0.1, 0.25, 1.0],
-                    }}
-                  >
-                    <Card
-                      sx={{
-                        height: "100%",
-                        display: "flex",
-                        flexDirection: "column",
-                        transition:
-                          "all 0.4s cubic-bezier(0.25, 0.1, 0.25, 1.0)",
-                        borderRadius: 4,
-                        overflow: "hidden",
-                        boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
-                        position: "relative",
-                        "&:hover": {
-                          transform: "translateY(-12px)",
-                          boxShadow: "0 16px 30px rgba(15, 82, 186, 0.15)",
-                        },
+            <>
+              <Grid container spacing={3}>
+                {sortedProducts.map((product, index) => (
+                  <Grid item xs={12} sm={6} md={4} key={product._id}>
+                    <motion.div
+                      initial={{ opacity: 0, y: 30 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{
+                        duration: 0.5,
+                        delay: index * 0.08,
+                        ease: [0.25, 0.1, 0.25, 1.0],
                       }}
                     >
-                      {product.rating >= 4.5 && (
-                        <Box
-                          sx={{
-                            position: "absolute",
-                            top: 12,
-                            left: 12,
-                            zIndex: 2,
-                            backgroundColor: "#0F52BA",
-                            color: "white",
-                            borderRadius: 6,
-                            px: 1.5,
-                            py: 0.5,
-                            fontSize: "0.75rem",
-                            fontWeight: "bold",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 0.5,
-                            boxShadow: "0 4px 8px rgba(15, 82, 186, 0.3)",
-                          }}
-                        >
-                          <VerifiedIcon fontSize="small" />
-                          Top Rated
-                        </Box>
-                      )}
-
-                      <Box
+                      <Card
                         sx={{
-                          position: "relative",
-                          height: "240px",
-                          overflow: "hidden",
-                          backgroundColor: "#f7f9ff",
+                          height: "100%",
                           display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          padding: 2,
+                          flexDirection: "column",
+                          transition:
+                            "all 0.4s cubic-bezier(0.25, 0.1, 0.25, 1.0)",
+                          borderRadius: 4,
+                          overflow: "hidden",
+                          boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
+                          position: "relative",
+                          "&:hover": {
+                            transform: "translateY(-12px)",
+                            boxShadow: "0 16px 30px rgba(15, 82, 186, 0.15)",
+                          },
                         }}
                       >
-                        <CardMedia
-                          component="img"
-                          sx={{
-                            height: "180px",
-                            width: "100%",
-                            objectFit: "contain",
-                            transition:
-                              "transform 0.6s cubic-bezier(0.25, 0.1, 0.25, 1.0)",
-                            "&:hover": {
-                              transform: "scale(1.08)",
-                            },
-                          }}
-                          image={
-                            product.imageUrl ||
-                            "https://via.placeholder.com/300?text=No+Image"
-                          }
-                          alt={product.title || "Product Image"}
-                          onError={handleImageError}
-                          onClick={() => handleProductClick(product)}
-                        />
-
-                        <Box
-                          sx={{
-                            position: "absolute",
-                            top: 12,
-                            right: 12,
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: 1,
-                          }}
-                        >
-                          <Tooltip title="View Details">
-                            <IconButton
-                              size="small"
-                              sx={{
-                                backgroundColor: "white",
-                                boxShadow: "0 3px 8px rgba(0,0,0,0.1)",
-                                transition: "all 0.3s ease",
-                                "&:hover": {
-                                  backgroundColor: "#0F52BA",
-                                  color: "white",
-                                  transform: "scale(1.1)",
-                                },
-                              }}
-                              onClick={() => handleProductClick(product)}
-                            >
-                              <VisibilityIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-
-                          <Tooltip
-                            title={
-                              favoriteProducts[product._id]
-                                ? "Remove from Favorites"
-                                : "Add to Favorites"
-                            }
-                          >
-                            <IconButton
-                              size="small"
-                              sx={{
-                                backgroundColor: "white",
-                                boxShadow: "0 3px 8px rgba(0,0,0,0.1)",
-                                transition: "all 0.3s ease",
-                                color: favoriteProducts[product._id]
-                                  ? "#ff3d71"
-                                  : "inherit",
-                                "&:hover": {
-                                  backgroundColor: favoriteProducts[product._id]
-                                    ? "#fff0f3"
-                                    : "#fff5f7",
-                                  color: "#ff3d71",
-                                  transform: "scale(1.1)",
-                                },
-                              }}
-                              onClick={() => handleToggleFavorite(product._id)}
-                            >
-                              {favoriteProducts[product._id] ? (
-                                <FavoriteIcon fontSize="small" />
-                              ) : (
-                                <FavoriteBorderIcon fontSize="small" />
-                              )}
-                            </IconButton>
-                          </Tooltip>
-                        </Box>
-                      </Box>
-
-                      <CardContent sx={{ flexGrow: 1, p: 3, pt: 2.5, pb: 1.5 }}>
-                        <Box sx={{ mb: 1 }}>
-                          <Chip
-                            label={product.categoryName}
-                            size="small"
-                            sx={{
-                              backgroundColor: "rgba(15, 82, 186, 0.08)",
-                              color: "#0F52BA",
-                              fontWeight: 600,
-                              fontSize: "0.7rem",
-                              borderRadius: 6,
-                              height: 22,
-                            }}
-                          />
-                          {product.inventory &&
-                            product.inventory.quantity < 5 &&
-                            product.inventory.quantity > 0 && (
-                              <Chip
-                                label="Low Stock"
-                                size="small"
-                                sx={{
-                                  backgroundColor: "#fff0e1",
-                                  color: "#ff9500",
-                                  fontWeight: 600,
-                                  fontSize: "0.7rem",
-                                  ml: 1,
-                                  borderRadius: 6,
-                                  height: 22,
-                                }}
-                              />
-                            )}
-                        </Box>
-
-                        <Typography
-                          gutterBottom
-                          variant="h6"
-                          component="div"
-                          fontWeight="700"
-                          sx={{
-                            fontSize: "1.1rem",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            display: "-webkit-box",
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: "vertical",
-                            height: "2.75em",
-                            cursor: "pointer",
-                            color: "#262a41",
-                          }}
-                          onClick={() => handleProductClick(product)}
-                        >
-                          {product.title || "Untitled Product"}
-                        </Typography>
-
-                        <Box display="flex" alignItems="center" mb={1.5}>
-                          <Rating
-                            value={product.rating || 0}
-                            readOnly
-                            size="small"
-                            precision={0.5}
-                            sx={{
-                              "& .MuiRating-iconFilled": {
-                                color: "#0F52BA",
-                              },
-                            }}
-                          />
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                            sx={{ ml: 1, fontSize: "0.85rem" }}
-                          >
-                            <span style={{ fontWeight: 600 }}>
-                              {product.rating
-                                ? product.rating.toFixed(1)
-                                : "0.0"}
-                            </span>
-                            {product.reviewCount > 0 && (
-                              <span> ({product.reviewCount})</span>
-                            )}
-                          </Typography>
-                        </Box>
-
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          sx={{
-                            mb: 2,
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            display: "-webkit-box",
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: "vertical",
-                            height: "3em",
-                            color: "#6b7280",
-                            lineHeight: 1.6,
-                          }}
-                        >
-                          {product.description || "No description available"}
-                        </Typography>
-
-                        {product.freeShipping && (
+                        {product.rating >= 4.5 && (
                           <Box
                             sx={{
+                              position: "absolute",
+                              top: 12,
+                              left: 12,
+                              zIndex: 2,
+                              backgroundColor: "#0F52BA",
+                              color: "white",
+                              borderRadius: 6,
+                              px: 1.5,
+                              py: 0.5,
+                              fontSize: "0.75rem",
+                              fontWeight: "bold",
                               display: "flex",
                               alignItems: "center",
-                              mb: 1,
-                              gap: 0.7,
+                              gap: 0.5,
+                              boxShadow: "0 4px 8px rgba(15, 82, 186, 0.3)",
                             }}
                           >
-                            <LocalShippingIcon
-                              sx={{ fontSize: "1rem", color: "#36b37e" }}
-                            />
-                            <Typography
-                              variant="body2"
-                              sx={{
-                                color: "#36b37e",
-                                fontWeight: 500,
-                                fontSize: "0.85rem",
-                              }}
-                            >
-                              Free Shipping
-                            </Typography>
+                            <VerifiedIcon fontSize="small" />
+                            Top Rated
                           </Box>
                         )}
 
                         <Box
                           sx={{
+                            position: "relative",
+                            height: "240px",
+                            overflow: "hidden",
+                            backgroundColor: "#f7f9ff",
                             display: "flex",
-                            justifyContent: "space-between",
                             alignItems: "center",
-                            mb: 1.5,
-                            mt: 2,
+                            justifyContent: "center",
+                            padding: 2,
                           }}
                         >
-                          <Typography
-                            variant="h6"
-                            fontWeight="800"
+                          <CardMedia
+                            component="img"
                             sx={{
-                              color: "#0F52BA",
-                              fontSize: "1.3rem",
+                              height: "180px",
+                              width: "100%",
+                              objectFit: "contain",
+                              transition:
+                                "transform 0.6s cubic-bezier(0.25, 0.1, 0.25, 1.0)",
+                              "&:hover": {
+                                transform: "scale(1.08)",
+                              },
+                            }}
+                            image={
+                              product.imageUrl ||
+                              "https://via.placeholder.com/300?text=No+Image"
+                            }
+                            alt={product.title || "Product Image"}
+                            onError={handleImageError}
+                            onClick={() => handleProductClick(product)}
+                          />
+
+                          <Box
+                            sx={{
+                              position: "absolute",
+                              top: 12,
+                              right: 12,
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: 1,
                             }}
                           >
-                            ${product.price?.toFixed(2)}
+                            <Tooltip title="View Details">
+                              <IconButton
+                                size="small"
+                                sx={{
+                                  backgroundColor: "white",
+                                  boxShadow: "0 3px 8px rgba(0,0,0,0.1)",
+                                  transition: "all 0.3s ease",
+                                  "&:hover": {
+                                    backgroundColor: "#0F52BA",
+                                    color: "white",
+                                    transform: "scale(1.1)",
+                                  },
+                                }}
+                                onClick={() => handleProductClick(product)}
+                              >
+                                <VisibilityIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+
+                            <Tooltip
+                              title={
+                                favoriteProducts[product._id]
+                                  ? "Remove from Favorites"
+                                  : "Add to Favorites"
+                              }
+                            >
+                              <IconButton
+                                size="small"
+                                sx={{
+                                  backgroundColor: "white",
+                                  boxShadow: "0 3px 8px rgba(0,0,0,0.1)",
+                                  transition: "all 0.3s ease",
+                                  color: favoriteProducts[product._id]
+                                    ? "#ff3d71"
+                                    : "inherit",
+                                  "&:hover": {
+                                    backgroundColor: favoriteProducts[
+                                      product._id
+                                    ]
+                                      ? "#fff0f3"
+                                      : "#fff5f7",
+                                    color: "#ff3d71",
+                                    transform: "scale(1.1)",
+                                  },
+                                }}
+                                onClick={() =>
+                                  handleToggleFavorite(product._id)
+                                }
+                              >
+                                {favoriteProducts[product._id] ? (
+                                  <FavoriteIcon fontSize="small" />
+                                ) : (
+                                  <FavoriteBorderIcon fontSize="small" />
+                                )}
+                              </IconButton>
+                            </Tooltip>
+                          </Box>
+                        </Box>
+
+                        <CardContent sx={{ flexGrow: 1, p: 3, pt: 2.5, pb: 1.5 }}>
+                          <Box sx={{ mb: 1 }}>
+                            <Chip
+                              label={product.categoryName}
+                              size="small"
+                              sx={{
+                                backgroundColor: "rgba(15, 82, 186, 0.08)",
+                                color: "#0F52BA",
+                                fontWeight: 600,
+                                fontSize: "0.7rem",
+                                borderRadius: 6,
+                                height: 22,
+                              }}
+                            />
+                            {product.inventory &&
+                              product.inventory.quantity < 5 &&
+                              product.inventory.quantity > 0 && (
+                                <Chip
+                                  label="Low Stock"
+                                  size="small"
+                                  sx={{
+                                    backgroundColor: "#fff0e1",
+                                    color: "#ff9500",
+                                    fontWeight: 600,
+                                    fontSize: "0.7rem",
+                                    ml: 1,
+                                    borderRadius: 6,
+                                    height: 22,
+                                  }}
+                                />
+                              )}
+                          </Box>
+
+                          <Typography
+                            gutterBottom
+                            variant="h6"
+                            component="div"
+                            fontWeight="700"
+                            sx={{
+                              fontSize: "1.1rem",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              display: "-webkit-box",
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: "vertical",
+                              height: "2.75em",
+                              cursor: "pointer",
+                              color: "#262a41",
+                            }}
+                            onClick={() => handleProductClick(product)}
+                          >
+                            {product.title || "Untitled Product"}
                           </Typography>
+
+                          <Box display="flex" alignItems="center" mb={1.5}>
+                            <Rating
+                              value={product.rating || 0}
+                              readOnly
+                              size="small"
+                              precision={0.5}
+                              sx={{
+                                "& .MuiRating-iconFilled": {
+                                  color: "#0F52BA",
+                                },
+                              }}
+                            />
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                              sx={{ ml: 1, fontSize: "0.85rem" }}
+                            >
+                              <span style={{ fontWeight: 600 }}>
+                                {product.rating
+                                  ? product.rating.toFixed(1)
+                                  : "0.0"}
+                              </span>
+                              {product.reviewCount > 0 && (
+                                <span> ({product.reviewCount})</span>
+                              )}
+                            </Typography>
+                          </Box>
 
                           <Typography
                             variant="body2"
                             color="text.secondary"
-                            sx={{ fontStyle: "italic", fontSize: "0.85rem" }}
+                            sx={{
+                              mb: 2,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              display: "-webkit-box",
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: "vertical",
+                              height: "3em",
+                              color: "#6b7280",
+                              lineHeight: 1.6,
+                            }}
                           >
-                            By {product.sellerName}
+                            {product.description || "No description available"}
                           </Typography>
-                        </Box>
-                      </CardContent>
 
-                      <CardActions sx={{ p: 0 }}>
-                        <Button
-                          variant="contained"
-                          fullWidth
-                          startIcon={<AddShoppingCartIcon />}
-                          onClick={() => handleAddToCart(product._id)}
-                          disabled={addingToCart[product._id]}
-                          sx={{
-                            backgroundColor: "#0F52BA",
-                            borderRadius: 0,
-                            py: 1.5,
-                            fontWeight: 600,
-                            letterSpacing: "0.5px",
-                            transition: "all 0.3s ease",
-                            "&:hover": {
-                              backgroundColor: "#0A3C8A",
-                              boxShadow: "0 4px 12px rgba(15, 82, 186, 0.3)",
-                            },
-                            textTransform: "none",
-                            fontSize: "0.95rem",
-                          }}
-                        >
-                          {addingToCart[product._id]
-                            ? "Adding..."
-                            : "Add to Cart"}
-                        </Button>
-                      </CardActions>
-                    </Card>
-                  </motion.div>
-                </Grid>
-              ))}
-            </Grid>
+                          {product.freeShipping && (
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                mb: 1,
+                                gap: 0.7,
+                              }}
+                            >
+                              <LocalShippingIcon
+                                sx={{ fontSize: "1rem", color: "#36b37e" }}
+                              />
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  color: "#36b37e",
+                                  fontWeight: 500,
+                                  fontSize: "0.85rem",
+                                }}
+                              >
+                                Free Shipping
+                              </Typography>
+                            </Box>
+                          )}
+
+                          <Box
+                            sx={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              mb: 1.5,
+                              mt: 2,
+                            }}
+                          >
+                            <Typography
+                              variant="h6"
+                              fontWeight="800"
+                              sx={{
+                                color: "#0F52BA",
+                                fontSize: "1.3rem",
+                              }}
+                            >
+                              ${product.price?.toFixed(2)}
+                            </Typography>
+
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                              sx={{ fontStyle: "italic", fontSize: "0.85rem" }}
+                            >
+                              By {product.sellerName}
+                            </Typography>
+                          </Box>
+                        </CardContent>
+
+                        <CardActions sx={{ p: 0 }}>
+                          <Button
+                            variant="contained"
+                            fullWidth
+                            startIcon={<AddShoppingCartIcon />}
+                            onClick={() => handleAddToCart(product._id)}
+                            disabled={addingToCart[product._id]}
+                            sx={{
+                              backgroundColor: "#0F52BA",
+                              borderRadius: 0,
+                              py: 1.5,
+                              fontWeight: 600,
+                              letterSpacing: "0.5px",
+                              transition: "all 0.3s ease",
+                              "&:hover": {
+                                backgroundColor: "#0A3C8A",
+                                boxShadow: "0 4px 12px rgba(15, 82, 186, 0.3)",
+                              },
+                              textTransform: "none",
+                              fontSize: "0.95rem",
+                            }}
+                          >
+                            {addingToCart[product._id]
+                              ? "Adding..."
+                              : "Add to Cart"}
+                          </Button>
+                        </CardActions>
+                      </Card>
+                    </motion.div>
+                  </Grid>
+                ))}
+              </Grid>
+
+              {/* PAGINATION */}
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  mt: 6,
+                  mb: 2,
+                }}
+              >
+                <Pagination
+                  count={totalPages}
+                  page={currentPage}
+                  onChange={handlePageChange}
+                  color="primary"
+                  size={isMobile ? "small" : "medium"}
+                  sx={{
+                    "& .MuiPaginationItem-root": {
+                      color: "#0F52BA",
+                      borderColor: "#0F52BA",
+                    },
+                    "& .MuiPaginationItem-page.Mui-selected": {
+                      backgroundColor: "#0F52BA",
+                      color: "white",
+                    },
+                    "& .MuiPaginationItem-page:hover": {
+                      backgroundColor: "rgba(15, 82, 186, 0.08)",
+                    },
+                  }}
+                />
+              </Box>
+            </>
           )}
         </Grid>
       </Grid>

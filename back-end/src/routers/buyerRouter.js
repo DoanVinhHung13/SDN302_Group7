@@ -45,7 +45,9 @@ buyerRouter.put('/addresses/:id', addressController.updateAddress);
 buyerRouter.delete('/addresses/:id', addressController.deleteAddress);
 buyerRouter.put('/addresses/:id/default', addressController.setDefaultAddress);
 
+// Voucher routes
 buyerRouter.get('/vouchers/code/:code', getVoucherByCode);
+buyerRouter.post('/vouchers/apply', require('../controllers/voucherController').applyVoucher);
 
 // Quản lý đơn hàng - requires buyer role specifically
 const orderRoutes = express.Router();
@@ -93,5 +95,13 @@ buyerRouter.delete('/return-requests/:id', returnRequestController.cancelReturnR
 // Quản lý Profile cá nhân
 buyerRouter.get("/profile", userController.getProfile);
 buyerRouter.put("/profile", userController.updateProfile);
+
+// Notification routes
+const notificationController = require('../controllers/notificationController');
+buyerRouter.get('/notifications', notificationController.getNotifications);
+buyerRouter.put('/notifications/mark-read', notificationController.markAsRead);
+buyerRouter.put('/notifications/mark-all-read', notificationController.markAllAsRead);
+buyerRouter.delete('/notifications/:id', notificationController.deleteNotification);
+buyerRouter.get('/notifications/unread-count', notificationController.getUnreadCount);
 
 module.exports = buyerRouter;

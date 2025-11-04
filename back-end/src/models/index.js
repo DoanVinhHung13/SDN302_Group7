@@ -10,7 +10,9 @@ const ReturnRequest = require("./ReturnRequest");
 const Bid = require("./Bid");
 const Review = require("./Review");
 const Coupon = require("./Coupon");
+const Voucher = require("./Voucher");
 const Inventory = require("./Inventory");
+const Notification = require("./Notification");
 const Feedback = require("./Feedback");
 const Dispute = require("./Dispute");
 const Store = require("./Store");
@@ -30,7 +32,9 @@ module.exports = {
   Bid,
   Review,
   Coupon,
+  Voucher,
   Inventory,
+  Notification,
   Feedback,
   Dispute,
   Store,

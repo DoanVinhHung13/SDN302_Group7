@@ -43,6 +43,9 @@ const initSocketServer = (server) => {
     // Add user to online users map
     onlineUsers.set(userId, socket.id);
     
+    // Join user to their personal notification room
+    socket.join(`user_${userId}`);
+    
     // Broadcast user online status
     io.emit('userStatus', { userId, status: 'online' });
     
@@ -170,6 +173,9 @@ const initSocketServer = (server) => {
       // Remove user from online users map
       onlineUsers.delete(userId);
       
+      // Leave notification room
+      socket.leave(`user_${userId}`);
+      
       // Broadcast user offline status
       io.emit('userStatus', { userId, status: 'offline' });
     });
@@ -178,4 +184,9 @@ const initSocketServer = (server) => {
   return io;
 };
 
-module.exports = { initSocketServer }; 
+// Export function to get IO instance
+const getIO = () => {
+  return global.io;
+};
+
+module.exports = { initSocketServer, getIO }; 

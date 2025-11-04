@@ -1,0 +1,293 @@
+{
+  "info": {
+    "name": "Shopii API Tests - Updated Features",
+    "description": "Test collection for Voucher, Return Request, and Notification systems",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Voucher System",
+      "item": [
+        {
+          "name": "Get Public Vouchers",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/vouchers/public?limit=10&page=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["vouchers", "public"],
+              "query": [
+                {"key": "limit", "value": "10"},
+                {"key": "page", "value": "1"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Validate Voucher by Code",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/buyers/vouchers/code/TEST2024?orderValue=150000&productIds=60d21b4667d0d8992e610c8d",
+              "host": ["{{baseUrl}}"],
+              "path": ["buyers", "vouchers", "code", "TEST2024"],
+              "query": [
+                {"key": "orderValue", "value": "150000"},
+                {"key": "productIds", "value": "60d21b4667d0d8992e610c8d"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Apply Voucher",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"TEST2024\",\n  \"orderId\": \"60d21b4667d0d8992e610c90\",\n  \"orderValue\": 150000,\n  \"productIds\": [\"60d21b4667d0d8992e610c8d\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/buyers/vouchers/apply",
+              "host": ["{{baseUrl}}"],
+              "path": ["buyers", "vouchers", "apply"]
+            }
+          }
+        },
+        {
+          "name": "Create Voucher (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"NEWVOUCHER2024\",\n  \"title\": \"New Year Voucher\",\n  \"description\": \"Special discount for new year\",\n  \"discount\": 15,\n  \"discountType\": \"percentage\",\n  \"maxDiscount\": 100000,\n  \"minOrderValue\": 200000,\n  \"usageLimit\": 1000,\n  \"usageLimitPerUser\": 2,\n  \"expirationDate\": \"2024-12-31T23:59:59.000Z\",\n  \"isActive\": true,\n  \"isPublic\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/vouchers",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "vouchers"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Return Request System",
+      "item": [
+        {
+          "name": "Create Return Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderItemId\": \"60d21b4667d0d8992e610c91\",\n  \"reason\": \"defective_product\",\n  \"description\": \"Product is not working as described\",\n  \"type\": \"return\",\n  \"images\": [\n    {\n      \"url\": \"https://example.com/image1.jpg\",\n      \"publicId\": \"return_image_1\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/buyers/return-requests",
+              "host": ["{{baseUrl}}"],
+              "path": ["buyers", "return-requests"]
+            }
+          }
+        },
+        {
+          "name": "Get User Return Requests",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/buyers/return-requests",
+              "host": ["{{baseUrl}}"],
+              "path": ["buyers", "return-requests"]
+            }
+          }
+        },
+        {
+          "name": "Get Return Request Detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/buyers/return-requests/{{returnRequestId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["buyers", "return-requests", "{{returnRequestId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notification System",
+      "item": [
+        {
+          "name": "Get Notifications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/buyers/notifications?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["buyers", "notifications"],
+              "query": [
+                {"key": "page", "value": "1"},
+                {"key": "limit", "value": "20"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Unread Count",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/buyers/notifications/unread-count",
+              "host": ["{{baseUrl}}"],
+              "path": ["buyers", "notifications", "unread-count"]
+            }
+          }
+        },
+        {
+          "name": "Mark Notifications as Read",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notificationIds\": [\"notification_id_1\", \"notification_id_2\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/buyers/notifications/mark-read",
+              "host": ["{{baseUrl}}"],
+              "path": ["buyers", "notifications", "mark-read"]
+            }
+          }
+        },
+        {
+          "name": "Mark All as Read",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/buyers/notifications/mark-all-read",
+              "host": ["{{baseUrl}}"],
+              "path": ["buyers", "notifications", "mark-all-read"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:9999/api"
+    },
+    {
+      "key": "token",
+      "value": "your_jwt_token_here"
+    },
+    {
+      "key": "adminToken",
+      "value": "your_admin_jwt_token_here"
+    },
+    {
+      "key": "returnRequestId",
+      "value": "return_request_id_here"
+    }
+  ]
+}

@@ -77,6 +77,9 @@ const server = http.createServer(app);
 // Initialize Socket.IO
 const io = initSocketServer(server);
 
+// Store io instance globally for notification service
+global.io = io;
+
 // Store io instance on app for potential use in request handlers
 app.set('io', io);
 

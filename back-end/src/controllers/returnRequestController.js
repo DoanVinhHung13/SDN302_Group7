@@ -8,51 +8,68 @@ const { ReturnRequest, OrderItem } = require('../models');
  */
 exports.createReturnRequest = async (req, res) => {
   try {
-    const { orderItemId, reason } = req.body;
+    const { orderItemId, reason, description, type = 'return', images = [] } = req.body;
     const userId = req.user.id;
 
-    if (!orderItemId || !reason) {
+    // Validation
+    if (!orderItemId || !reason || !description) {
       return res.status(400).json({
         success: false,
-        message: 'Thiếu thông tin cần thiết: orderItemId, reason'
+        message: 'Thiếu thông tin cần thiết: orderItemId, reason, description'
       });
     }
 
-        // Kiểm tra orderItem có tồn tại không
-  const orderItem = await OrderItem.findById(orderItemId);
+    // Kiểm tra orderItem có tồn tại không
+    const orderItem = await OrderItem.findById(orderItemId)
+      .populate('productId', 'title price sellerId')
+      .populate('orderId', 'buyerId orderNumber totalAmount createdAt status');
 
-  if (!orderItem) {
-    return res.status(404).json({
-      success: false,
-      message: 'Không tìm thấy mặt hàng trong đơn hàng'
-    });
-  }
+    if (!orderItem) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy mặt hàng trong đơn hàng'
+      });
+    }
 
-  // Lấy thông tin đơn hàng
-  const order = await mongoose.model('Order').findById(orderItem.orderId);
-  
-  if (!order) {
-    return res.status(404).json({
-      success: false,
-      message: 'Không tìm thấy đơn hàng'
-    });
-  }
+    const order = orderItem.orderId;
+    
+    // Kiểm tra quyền sở hữu
+    if (!order.buyerId || order.buyerId.toString() !== userId) {
+      return res.status(403).json({
+        success: false,
+        message: 'Bạn không có quyền tạo yêu cầu trả hàng cho đơn hàng này'
+      });
+    }
 
-  // Kiểm tra orderItem có thuộc về user hiện tại không
-  if (!order.buyerId || order.buyerId.toString() !== userId) {
-    return res.status(403).json({
-      success: false,
-      message: 'Bạn không có quyền tạo yêu cầu trả hàng cho đơn hàng này'
-    });
-  }
+    // Kiểm tra trạng thái đơn hàng (chỉ cho phép return khi đã delivered)
+    if (!['delivered', 'completed'].includes(order.status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Chỉ có thể tạo yêu cầu trả hàng khi đơn hàng đã được giao'
+      });
+    }
+
+    // Kiểm tra thời hạn return (30 ngày)
+    const deliveryDate = order.deliveredAt || order.updatedAt;
+    const daysSinceDelivery = Math.floor((Date.now() - deliveryDate) / (1000 * 60 * 60 * 24));
+    
+    if (daysSinceDelivery > 30) {
+      return res.status(400).json({
+        success: false,
+        message: 'Đã quá thời hạn 30 ngày để tạo yêu cầu trả hàng'
+      });
+    }
 
     // Kiểm tra đã có return request cho orderItem này chưa
-    const existingRequest = await ReturnRequest.findOne({ orderItemId });
+    const existingRequest = await ReturnRequest.findOne({ 
+      orderItemId,
+      status: { $nin: ['cancelled', 'rejected'] }
+    });
 
     if (existingRequest) {
       return res.status(400).json({
         success: false,
-        message: 'Đã tồn tại yêu cầu trả hàng cho mặt hàng này',
+        message: 'Đã tồn tại yêu cầu trả hàng đang xử lý cho mặt hàng này',
         data: existingRequest
       });
     }
@@ -60,13 +77,49 @@ exports.createReturnRequest = async (req, res) => {
     // Tạo return request mới
     const returnRequest = new ReturnRequest({
       orderItemId,
+      orderId: order._id,
       userId,
+      sellerId: orderItem.productId.sellerId,
+      type,
       reason,
-      status: 'pending', // Mặc định là 'pending'
-      createdAt: Date.now()
+      description,
+      images,
+      status: 'pending',
+      timeline: [{
+        status: 'pending',
+        message: 'Yêu cầu trả hàng đã được tạo',
+        createdAt: new Date(),
+        createdBy: userId
+      }]
     });
 
+    // Tính priority dựa trên giá trị đơn hàng
+    returnRequest.priority = returnRequest.calculatePriority(order.totalAmount);
+
     await returnRequest.save();
+
+    // Gửi thông báo cho seller
+    const NotificationService = require('../services/notificationService');
+    const User = require('../models/User');
+    const buyer = await User.findById(userId).select('fullname');
+    
+    await NotificationService.notifyReturnRequest(
+      orderItem.productId.sellerId,
+      returnRequest._id,
+      orderItem.productId.title,
+      buyer.fullname
+    );
+
+    // Populate thông tin để trả về
+    await returnRequest.populate([
+      {
+        path: 'orderItemId',
+        populate: [
+          { path: 'productId', select: 'title image price' },
+          { path: 'orderId', select: 'orderNumber createdAt totalAmount' }
+        ]
+      }
+    ]);
 
     return res.status(201).json({
       success: true,

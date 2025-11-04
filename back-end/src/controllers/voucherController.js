@@ -117,37 +117,209 @@ const toggleVoucherActive = async (req, res, next) => {
   }
 };
 
-// @desc    Tìm kiếm voucher theo mã code
+// @desc    Tìm kiếm và validate voucher theo mã code
 // @route   GET /api/vouchers/code/:code
-// @access  Private/Admin
+// @access  Private (Buyer/Seller)
 const getVoucherByCode = async (req, res, next) => {
   try {
-    const code = req.params.code;
-    const now = new Date();
+    const code = req.params.code.toUpperCase();
+    const userId = req.user.id;
+    const { orderValue, productIds } = req.query;
 
-    // Tìm voucher trong cơ sở dữ liệu
-    const voucher = await Voucher.findOne({ code });
+    // Tìm voucher và populate các trường cần thiết
+    const voucher = await Voucher.findOne({ code })
+      .populate('applicableProducts', 'title price')
+      .populate('applicableCategories', 'name')
+      .populate('applicableStores', 'name');
 
-    // Kiểm tra kết quả
     if (!voucher) {
-      return res.status(404).json({ message: 'Không tìm thấy voucher' });
+      return res.status(404).json({ 
+        success: false,
+        message: 'Mã giảm giá không tồn tại',
+        code: 'VOUCHER_NOT_FOUND'
+      });
     }
 
-    // Kiểm tra điều kiện sử dụng
-    if (!voucher.isActive) {
-      return res.status(400).json({ message: 'Voucher đã hết hạn hoặc hết lượt sử dụng' });
+    // Nếu có thông tin đơn hàng, validate chi tiết
+    if (orderValue && productIds) {
+      const products = productIds.split(',').map(id => ({ _id: id }));
+      const validation = voucher.isValidForUser(userId, products, parseFloat(orderValue));
+      
+      if (!validation.valid) {
+        return res.status(400).json({
+          success: false,
+          message: validation.message,
+          code: 'VOUCHER_INVALID',
+          voucher: {
+            code: voucher.code,
+            title: voucher.title,
+            description: voucher.description,
+            discountType: voucher.discountType,
+            discount: voucher.discount,
+            maxDiscount: voucher.maxDiscount,
+            minOrderValue: voucher.minOrderValue
+          }
+        });
+      }
+
+      // Tính toán discount amount
+      const discountAmount = voucher.calculateDiscount(parseFloat(orderValue));
+      
+      return res.json({
+        success: true,
+        message: 'Mã giảm giá hợp lệ',
+        voucher: {
+          _id: voucher._id,
+          code: voucher.code,
+          title: voucher.title,
+          description: voucher.description,
+          discountType: voucher.discountType,
+          discount: voucher.discount,
+          maxDiscount: voucher.maxDiscount,
+          minOrderValue: voucher.minOrderValue,
+          discountAmount,
+          remainingUsage: voucher.usageLimit - voucher.usedCount,
+          expirationDate: voucher.expirationDate
+        }
+      });
     }
 
-    if (voucher.expirationDate < now) {
-      return res.status(400).json({ message: 'Voucher đã hết hạn' });
-    }
+    // Trả về thông tin cơ bản nếu không có thông tin đơn hàng
+    res.json({
+      success: true,
+      message: 'Tìm thấy mã giảm giá',
+      voucher: {
+        _id: voucher._id,
+        code: voucher.code,
+        title: voucher.title,
+        description: voucher.description,
+        discountType: voucher.discountType,
+        discount: voucher.discount,
+        maxDiscount: voucher.maxDiscount,
+        minOrderValue: voucher.minOrderValue,
+        remainingUsage: voucher.usageLimit - voucher.usedCount,
+        expirationDate: voucher.expirationDate,
+        isActive: voucher.isActive
+      }
+    });
 
-    if (voucher.usedCount >= voucher.usageLimit) {
-      return res.status(400).json({ message: 'Voucher đã hết lượt sử dụng' });
-    }
-
-    res.json(voucher);
   } catch (error) {
+    console.error('Error in getVoucherByCode:', error);
+    next(error);
+  }
+};
+
+// @desc    Lấy danh sách voucher công khai cho user
+// @route   GET /api/vouchers/public
+// @access  Public
+const getPublicVouchers = async (req, res, next) => {
+  try {
+    const now = new Date();
+    const { category, store, limit = 10, page = 1 } = req.query;
+    
+    let query = {
+      isActive: true,
+      isPublic: true,
+      startDate: { $lte: now },
+      expirationDate: { $gt: now },
+      usedCount: { $lt: '$usageLimit' }
+    };
+
+    // Filter by category
+    if (category) {
+      query.applicableCategories = category;
+    }
+
+    // Filter by store
+    if (store) {
+      query.applicableStores = store;
+    }
+
+    const vouchers = await Voucher.find(query)
+      .populate('applicableCategories', 'name')
+      .populate('applicableStores', 'name')
+      .sort({ createdAt: -1 })
+      .limit(parseInt(limit))
+      .skip((parseInt(page) - 1) * parseInt(limit))
+      .select('code title description discountType discount maxDiscount minOrderValue expirationDate remainingUsage');
+
+    const total = await Voucher.countDocuments(query);
+
+    res.json({
+      success: true,
+      vouchers: vouchers.map(v => ({
+        ...v.toObject(),
+        remainingUsage: v.usageLimit - v.usedCount
+      })),
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / parseInt(limit))
+      }
+    });
+
+  } catch (error) {
+    console.error('Error in getPublicVouchers:', error);
+    next(error);
+  }
+};
+
+// @desc    Apply voucher to order (sử dụng voucher)
+// @route   POST /api/vouchers/apply
+// @access  Private
+const applyVoucher = async (req, res, next) => {
+  try {
+    const { code, orderId, orderValue, productIds, shippingFee = 0 } = req.body;
+    const userId = req.user.id;
+
+    const voucher = await Voucher.findOne({ code: code.toUpperCase() });
+    
+    if (!voucher) {
+      return res.status(404).json({
+        success: false,
+        message: 'Mã giảm giá không tồn tại'
+      });
+    }
+
+    // Validate voucher
+    const products = productIds.map(id => ({ _id: id }));
+    const validation = voucher.isValidForUser(userId, products, orderValue);
+    
+    if (!validation.valid) {
+      return res.status(400).json({
+        success: false,
+        message: validation.message
+      });
+    }
+
+    // Calculate discount
+    const discountAmount = voucher.calculateDiscount(orderValue, shippingFee);
+
+    // Update voucher usage
+    voucher.usedCount += 1;
+    voucher.usageHistory.push({
+      userId,
+      orderId,
+      discountAmount,
+      usedAt: new Date()
+    });
+
+    await voucher.save();
+
+    res.json({
+      success: true,
+      message: 'Áp dụng mã giảm giá thành công',
+      discountAmount,
+      voucher: {
+        code: voucher.code,
+        title: voucher.title,
+        discountType: voucher.discountType
+      }
+    });
+
+  } catch (error) {
+    console.error('Error in applyVoucher:', error);
     next(error);
   }
 };
@@ -160,6 +332,7 @@ module.exports = {
   updateVoucher,
   deleteVoucher,
   toggleVoucherActive,
-  getVoucherByCode, // Thêm hàm mới vào đây
-  
+  getVoucherByCode,
+  getPublicVouchers,
+  applyVoucher
 };

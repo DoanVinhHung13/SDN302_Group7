@@ -56,6 +56,8 @@ router.get('/products', productController.listAllProducts);
 router.get('/categories', categoryController.listAllCategories);
 // Public route for product reviews
 router.get('/products/:productId/reviews', reviewController.getProductReviews);
+// Public vouchers
+router.get('/vouchers/public', require('../controllers/voucherController').getPublicVouchers);
 
 // Protected route for product details with all related information
 router.get('/products/:productId/detail', authMiddleware, productController.getProductDetail);

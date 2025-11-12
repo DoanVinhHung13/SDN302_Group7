@@ -36,6 +36,7 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
+import WatchlistService from "../services/api/WatchlistService";
 
 const Home = () => {
   const [products, setProducts] = useState([]);
@@ -241,23 +242,56 @@ const Home = () => {
     }
   };
 
-  const handleToggleFavorite = (productId) => {
+  const handleToggleFavorite = async (productId) => { // 🌟 THÊM ASYNC 🌟
     if (!isAuthenticated) {
-      toast.info("Please sign in to favorite products");
-      return;
+        toast.info("Please sign in to favorite products");
+        navigate("/signin");
+        return;
     }
 
-    setFavoriteProducts((prev) => ({
-      ...prev,
-      [productId]: !prev[productId],
-    }));
+    try {
+        // Cập nhật trạng thái loading tạm thời (Tùy chọn)
+        setFavoriteProducts((prev) => ({
+            ...prev,
+            [productId]: !prev[productId], // Tạm thời đảo ngược trạng thái FE
+        }));
+        
+        // 1. GỌI API ĐỂ THÊM/XÓA SẢN PHẨM KHỎI WATCHLIST
+        const response = await WatchlistService.toggleWatchlist(productId);
 
-    if (!favoriteProducts[productId]) {
-      toast.success("Added to favorites!");
-    } else {
-      toast.info("Removed from favorites");
+        // 2. CẬP NHẬT GIAO DIỆN (hiển thị thông báo)
+        if (response.isWatching) {
+            toast.success("Added to favorites!");
+        } else {
+            toast.info("Removed from favorites");
+        }
+
+        // 3. ĐỒNG BỘ VĨNH VIỄN: Gọi lại fetchProducts() để tải lại dữ liệu
+        // Điều này là cần thiết vì API Watchlist thay đổi dữ liệu User,
+        // nhưng API Product cần thông tin đó để biết sản phẩm có được yêu thích hay không.
+        // LƯU Ý: Nếu fetchProducts() quá chậm, bạn có thể chỉ cần gọi lại API
+        //  để lấy watchlist và cập nhật state favoriteProducts
+        
+        // Nếu API product/user của bạn không trả về trạng thái watchlist cùng với product,
+        // bạn cần chạy lại hàm lấy sản phẩm để cập nhật trạng thái trái tim chính xác.
+        // fetchProducts(); 
+        
+        // CÁCH TỐT HƠN (Không tải lại sản phẩm):
+        // Nếu bạn đã có trạng thái favoriteProducts[productId] ban đầu, 
+        // bạn chỉ cần cập nhật trạng thái local một lần nữa
+        
+        // (Giữ nguyên logic setFavoriteProducts ban đầu vì nó đã chạy trước đó)
+
+    } catch (error) {
+        // Nếu lỗi, cuộn lại trạng thái local và báo lỗi
+        setFavoriteProducts((prev) => ({
+            ...prev,
+            [productId]: !prev[productId], // Hoàn tác lại trạng thái FE
+        }));
+        console.error("Error toggling favorite:", error);
+        toast.error("Failed to update favorites.");
     }
-  };
+};
 
   const handleProductClick = (product) => {
     navigate(`/auth/product/${product._id}`, { state: { item: product } });

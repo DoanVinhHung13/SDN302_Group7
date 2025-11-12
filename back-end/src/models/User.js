@@ -38,6 +38,12 @@ const userSchema = new Schema(
       enum: ["buyer", "seller", "admin"],
       default: "buyer",
     },
+    watchlist: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Product", // Liên kết đến Model Product
+      },
+    ],
 
     avatarURL: { type: String },
 

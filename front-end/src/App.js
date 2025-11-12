@@ -62,6 +62,7 @@ import AdminDashboardLayout from "./pages/DashboardAdmin/ManagerDashboardAdminLa
 import ManageStore from "./pages/DashboardAdmin/ManageShop/ManageStore";
 import ManageUser from "./pages/DashboardAdmin/ManageUser/ManageUser";
 import ManageVoucher from "./pages/DashboardAdmin/ManageVoucher/ManageVoucher";
+import Watchlist from "./components/home/Header/Watchlist.jsx";
 
 const Layout = () => {
   return (
@@ -120,6 +121,8 @@ const router = createBrowserRouter(
         <Route path="/return-requests" element={<ReturnRequestsList />}></Route>
         <Route path="/signup" element={<SignUp />}></Route>
         <Route path="/verify-otp" element={<OTPVerification />}></Route>{" "}
+        {/* 🌟 THÊM ROUTE WATCHLIST 🌟 */}
+        <Route path="/watchlist" element={<Watchlist />}></Route>
         {/* Thêm route này */}
         <Route path="/signin" element={<SignIn />}></Route>
         <Route path="/auth/callback" element={<AuthCallback />}></Route>

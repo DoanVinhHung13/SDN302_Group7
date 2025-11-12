@@ -1,7 +1,7 @@
 const express = require('express');
 const { authMiddleware, isBuyer, isSellerOrBuyer } = require('../middleware/auth.middleware');
 const orderController = require('../controllers/orderController');
-const cartController = require('../controllers/cartController'); // Thêm dòng này
+const cartController = require('../controllers/cartController');
 const addressController = require('../controllers/addressController');
 const { getVoucherByCode } = require('../controllers/voucherController');
 const paymentController = require('../controllers/paymentController');
@@ -10,20 +10,26 @@ const reviewController = require('../controllers/reviewController');
 const disputeController = require('../controllers/disputeController');
 const userController = require('../controllers/userController');
 const returnRequestController = require('../controllers/returnRequestController');
+
+// 🌟 SỬA LỖI: Import các hàm cần thiết từ Controller 🌟
+const { 
+    getWatchlist, 
+    toggleWatchlist 
+} = require('../controllers/watchlistController'); 
+
 const buyerRouter = express.Router();
 
 // Public routes for payment callbacks (không yêu cầu xác thực)
 buyerRouter.post('/payments/vietqr/callback', paymentController.vietQRCallback);
 buyerRouter.get('/payments/payos/callback', paymentController.payosCallback);
-buyerRouter.get('/payments/payos/cancel', paymentController.payosCallback); // Using the same handler for cancel, as it handles failure cases
+buyerRouter.get('/payments/payos/cancel', paymentController.payosCallback);
 
 // PayPal simulation routes (public)
 buyerRouter.get('/payments/paypal/simulate', paymentController.paypalSimulate);
 buyerRouter.post('/payments/paypal/complete', paymentController.paypalComplete);
 
 // Protected routes (yêu cầu xác thực là buyer)
-buyerRouter.use(authMiddleware); // Add this line to ensure authentication happens first
-// Remove the isSellerOrBuyer middleware from the global level and apply it specifically where needed
+buyerRouter.use(authMiddleware); 
 
 // User role management
 buyerRouter.put('/change-role', authController.changeRole);
@@ -38,7 +44,7 @@ cartRoutes.delete('/remove/:productId', cartController.deleteCartItem);
 cartRoutes.post('/remove-multiple', cartController.removeMultipleItems);
 buyerRouter.use('/cart', cartRoutes);
 
-// Address routes - doesn't need role check, authMiddleware already ensures authenticated user
+// Address routes
 buyerRouter.post('/addresses', addressController.createAddress);
 buyerRouter.get('/addresses', addressController.getAddresses);
 buyerRouter.put('/addresses/:id', addressController.updateAddress);
@@ -51,7 +57,7 @@ buyerRouter.get('/vouchers/code/:code', getVoucherByCode);
 const orderRoutes = express.Router();
 orderRoutes.use(isBuyer);
 orderRoutes.post('/', orderController.createOrder);
-orderRoutes.post('/paypal', orderController.createOrderWithPayPal); // API mới cho đặt hàng + PayPal
+orderRoutes.post('/paypal', orderController.createOrderWithPayPal);
 orderRoutes.get('/', orderController.getBuyerOrders);
 orderRoutes.get('/:id', orderController.getOrderDetails);
 orderRoutes.put('/items/:id/status', orderController.updateOrderItemStatus);
@@ -93,5 +99,10 @@ buyerRouter.delete('/return-requests/:id', returnRequestController.cancelReturnR
 // Quản lý Profile cá nhân
 buyerRouter.get("/profile", userController.getProfile);
 buyerRouter.put("/profile", userController.updateProfile);
+
+// --- Watchlist Routes (Yêu cầu xác thực) ---
+// 🌟 SỬ DỤNG TRỰC TIẾP CÁC HÀM ĐÃ IMPORT 🌟
+buyerRouter.get('/watchlist', getWatchlist);
+buyerRouter.put('/watchlist/toggle/:productId', toggleWatchlist);
 
 module.exports = buyerRouter;

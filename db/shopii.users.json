@@ -1,230 +1,243 @@
-[{
-  "_id": {
-    "$oid": "68ccb7e8de56a05966a0c083"
+[
+  {
+    "_id": {
+      "$oid": "68ccb7e8de56a05966a0c083"
+    },
+    "googleId": "103825950797633897966",
+    "fullname": "nguyen huy",
+    "email": "huyn98699@gmail.com",
+    "role": "buyer",
+    "avatarURL": "https://lh3.googleusercontent.com/a/ACg8ocJOI2N3N0Jh2z4u2dgy869AFDX7WwLxDN7lBWOuEUIre81SRw=s96-c",
+    "action": "unlock",
+    "watchlist": [],
+    "isVerified": true,
+    "createdAt": {
+      "$date": "2025-09-19T01:54:48.057Z"
+    },
+    "updatedAt": {
+      "$date": "2025-09-19T01:54:48.057Z"
+    }
   },
-  "googleId": "103825950797633897966",
-  "fullname": "nguyen huy",
-  "email": "huyn98699@gmail.com",
-  "role": "buyer",
-  "avatarURL": "https://lh3.googleusercontent.com/a/ACg8ocJOI2N3N0Jh2z4u2dgy869AFDX7WwLxDN7lBWOuEUIre81SRw=s96-c",
-  "action": "unlock",
-  "isVerified": true,
-  "createdAt": {
-    "$date": "2025-09-19T01:54:48.057Z"
+  {
+    "_id": {
+      "$oid": "60d21b4667d0d8992e610c88"
+    },
+    "username": "johndoe",
+    "fullname": "John Doe",
+    "email": "thangnguyen11112002@gmail.com",
+    "password": "$2b$10$GHVNmgYB9W9RE2Fs6BCAsOeMl5ec.KjMQ8sOTHRmaak0yJ3qZGkBe",
+    "role": "buyer",
+    "avatarURL": "https://example.com/avatars/john.jpg",
+    "action": "unlock",
+    "watchlist": [],
+    "createdAt": {
+      "$date": "2023-06-21T10:00:00.000Z"
+    },
+    "updatedAt": {
+      "$date": "2025-07-24T07:12:57.150Z"
+    }
   },
-  "updatedAt": {
-    "$date": "2025-09-19T01:54:48.057Z"
+  {
+    "_id": {
+      "$oid": "60d21b4667d0d8992e610c89"
+    },
+    "username": "janesmith",
+    "fullname": "Jane Smith",
+    "email": "thangndhe172360@fpt.edu.vn",
+    "password": "$2b$10$aVlJe6bEhcR6BHZ2RequteMMjVlEJ9Wbv.RZ7rsWPs9mIL2wyhMTC",
+    "role": "seller",
+    "avatarURL": "https://sm.ign.com/t/ign_nordic/cover/a/avatar-gen/avatar-generations_prsz.600.jpg",
+    "action": "unlock",
+    "watchlist": [],
+    "createdAt": {
+      "$date": "2023-06-21T11:00:00.000Z"
+    },
+    "updatedAt": {
+      "$date": "2025-07-16T05:02:34.681Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "60d21b4667d0d8992e610c8a"
+    },
+    "username": "admin",
+    "fullname": "Admin User",
+    "email": "winfourt4@gmail.com",
+    "password": "$2b$10$04H3KSPmEpRVaKn8DANpleVj9/lwCs3gTuu5EeJTU0iEb.hK9Qbom",
+    "role": "admin",
+    "avatarURL": "https://example.com/avatars/admin.jpg",
+    "action": "unlock",
+    "watchlist": [],
+    "createdAt": {
+      "$date": "2023-06-21T09:00:00.000Z"
+    },
+    "updatedAt": {
+      "$date": "2025-07-24T06:26:46.325Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68c50bf2275979c69b496a66"
+    },
+    "username": "ronaldo",
+    "fullname": "Ronaldo",
+    "email": "ronaldo@gmail.com",
+    "password": "$2b$10$UcGVjPoP7HwYzo6/.m7ra.EOf1IZRYowoqC3P6jfDSHGPaEHMKid2",
+    "role": "buyer",
+    "action": "unlock",
+    "watchlist": [],
+    "isVerified": false,
+    "otp": "723701",
+    "otpExpires": {
+      "$date": "2025-09-13T06:25:14.214Z"
+    },
+    "createdAt": {
+      "$date": "2025-09-13T06:15:14.245Z"
+    },
+    "updatedAt": {
+      "$date": "2025-09-13T06:15:14.245Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68c5170162da66c07b04a97f"
+    },
+    "username": "khangnee",
+    "fullname": "khang ne",
+    "email": "baoichaudoi@gmail.com",
+    "password": "$2b$10$FzYmeywLrsoe6bIVAj8/ouroUbhg9/m2aJZU2QyqfE4CZ02pk/VCy",
+    "role": "buyer",
+    "action": "unlock",
+    "watchlist": [],
+    "isVerified": false,
+    "otp": "266465",
+    "otpExpires": {
+      "$date": "2025-09-13T07:12:25.510Z"
+    },
+    "createdAt": {
+      "$date": "2025-09-13T07:02:25.533Z"
+    },
+    "updatedAt": {
+      "$date": "2025-09-13T15:13:20.133Z"
+    },
+    "avatarURL": "https://lh3.googleusercontent.com/a/ACg8ocK6aXDew0imC2xzAdRbD5XozFspXEaxpvZn4Cnr-5iVefe7l5I=s96-c",
+    "googleId": "101082476176044690684"
+  },
+  {
+    "_id": {
+      "$oid": "68c51956b6eb581e57ab06e2"
+    },
+    "username": "ducanh",
+    "fullname": "duc anh tran",
+    "email": "banghoangtu35@gmail.com",
+    "password": "$2b$10$0ZEFCibpGwQ1Zup.j2Iu/OIpzeOz9.xwjjVKJBs2OKKCIGjIRuxUC",
+    "role": "buyer",
+    "action": "unlock",
+    "watchlist": [],
+    "isVerified": false,
+    "otp": "939314",
+    "otpExpires": {
+      "$date": "2025-09-13T07:22:22.492Z"
+    },
+    "createdAt": {
+      "$date": "2025-09-13T07:12:22.508Z"
+    },
+    "updatedAt": {
+      "$date": "2025-09-13T15:15:46.252Z"
+    },
+    "avatarURL": "https://lh3.googleusercontent.com/a/ACg8ocIR016mgEExQ42smtSJd5TuEWnemYoCRabHJWJeZsrUuZQeYqHv=s96-c",
+    "googleId": "105764419713740093263"
+  },
+  {
+    "_id": {
+      "$oid": "68c51c790ce9c1fca51c160b"
+    },
+    "username": "customer",
+    "fullname": "Customer",
+    "email": "duytspt009@gmail.com",
+    "password": "$2b$10$lmpfcmjDBzNN2IvYOG4mGuk5alITNlVY79Dyo9rZ9uDaEsM2tYT8y",
+    "role": "buyer",
+    "action": "unlock",
+    "watchlist": [],
+    "isVerified": false,
+    "otp": "674913",
+    "otpExpires": {
+      "$date": "2025-09-13T07:35:45.632Z"
+    },
+    "createdAt": {
+      "$date": "2025-09-13T07:25:45.645Z"
+    },
+    "updatedAt": {
+      "$date": "2025-09-13T07:25:45.645Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68c51f01c477a0ca5b9be18d"
+    },
+    "username": "seller",
+    "fullname": "seller",
+    "email": "seller@gmail.com",
+    "password": "$2b$10$M2c0vMyayRTnx9ZseM0Tl.ImNsK7iC8eXF7qJyHmjTgxKJndQcksK",
+    "role": "seller",
+    "action": "unlock",
+    "watchlist": [],
+    "isVerified": false,
+    "otp": "381568",
+    "otpExpires": {
+      "$date": "2025-09-13T07:46:33.414Z"
+    },
+    "createdAt": {
+      "$date": "2025-09-13T07:36:33.427Z"
+    },
+    "updatedAt": {
+      "$date": "2025-09-13T07:36:33.427Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "68c52479562b012b3fe6ef84"
+    },
+    "username": "buyer1",
+    "fullname": "buyer1",
+    "email": "buyer@gmail.com",
+    "password": "$2b$10$M2c0vMyayRTnx9ZseM0Tl.ImNsK7iC8eXF7qJyHmjTgxKJndQcksK",
+    "role": "buyer",
+    "action": "unlock",
+    "watchlist": [],
+    "isVerified": true,
+    "otp": null,
+    "otpExpires": null,
+    "createdAt": {
+      "$date": "2025-09-13T07:59:53.373Z"
+    },
+    "updatedAt": {
+      "$date": "2025-09-13T15:13:06.256Z"
+    },
+    "avatarURL": "https://lh3.googleusercontent.com/a/ACg8ocLb3g8c5HGibYCEQt_7Qmkup51b5Ro8Hj_46py4B77PuEhUuZQ=s96-c",
+    "googleId": "104013643318628747705"
+  },
+  {
+    "_id": {
+      "$oid": "68c52578562b012b3fe6efad"
+    },
+    "username": "admin1",
+    "fullname": "Admin",
+    "email": "admin@gmail.com",
+    "password": "$2b$10$M2c0vMyayRTnx9ZseM0Tl.ImNsK7iC8eXF7qJyHmjTgxKJndQcksK",
+    "role": "admin",
+    "action": "unlock",
+    "watchlist": [],
+    "isVerified": true,
+    "otp": null,
+    "otpExpires": null,
+    "createdAt": {
+      "$date": "2025-09-13T08:04:08.055Z"
+    },
+    "updatedAt": {
+      "$date": "2025-09-16T08:58:08.859Z"
+    },
+    "avatarURL": "https://lh3.googleusercontent.com/a/ACg8ocINF04rzIgnFDh9D7v2bhgijL5wTkgovvlpDy9dPM-wT1pA4m7o=s96-c",
+    "googleId": "116349184075426206055"
   }
-},
-{
-  "_id": {
-    "$oid": "60d21b4667d0d8992e610c88"
-  },
-  "username": "johndoe",
-  "fullname": "John Doe",
-  "email": "thangnguyen11112002@gmail.com",
-  "password": "$2b$10$GHVNmgYB9W9RE2Fs6BCAsOeMl5ec.KjMQ8sOTHRmaak0yJ3qZGkBe",
-  "role": "buyer",
-  "avatarURL": "https://example.com/avatars/john.jpg",
-  "action": "unlock",
-  "createdAt": {
-    "$date": "2023-06-21T10:00:00.000Z"
-  },
-  "updatedAt": {
-    "$date": "2025-07-24T07:12:57.150Z"
-  }
-},
-{
-  "_id": {
-    "$oid": "60d21b4667d0d8992e610c89"
-  },
-  "username": "janesmith",
-  "fullname": "Jane Smith",
-  "email": "thangndhe172360@fpt.edu.vn",
-  "password": "$2b$10$aVlJe6bEhcR6BHZ2RequteMMjVlEJ9Wbv.RZ7rsWPs9mIL2wyhMTC",
-  "role": "seller",
-  "avatarURL": "https://sm.ign.com/t/ign_nordic/cover/a/avatar-gen/avatar-generations_prsz.600.jpg",
-  "action": "unlock",
-  "createdAt": {
-    "$date": "2023-06-21T11:00:00.000Z"
-  },
-  "updatedAt": {
-    "$date": "2025-07-16T05:02:34.681Z"
-  }
-},
-{
-  "_id": {
-    "$oid": "60d21b4667d0d8992e610c8a"
-  },
-  "username": "admin",
-  "fullname": "Admin User",
-  "email": "winfourt4@gmail.com",
-  "password": "$2b$10$04H3KSPmEpRVaKn8DANpleVj9/lwCs3gTuu5EeJTU0iEb.hK9Qbom",
-  "role": "admin",
-  "avatarURL": "https://example.com/avatars/admin.jpg",
-  "action": "unlock",
-  "createdAt": {
-    "$date": "2023-06-21T09:00:00.000Z"
-  },
-  "updatedAt": {
-    "$date": "2025-07-24T06:26:46.325Z"
-  }
-},
-{
-  "_id": {
-    "$oid": "68c50bf2275979c69b496a66"
-  },
-  "username": "ronaldo",
-  "fullname": "Ronaldo",
-  "email": "ronaldo@gmail.com",
-  "password": "$2b$10$UcGVjPoP7HwYzo6/.m7ra.EOf1IZRYowoqC3P6jfDSHGPaEHMKid2",
-  "role": "buyer",
-  "action": "unlock",
-  "isVerified": false,
-  "otp": "723701",
-  "otpExpires": {
-    "$date": "2025-09-13T06:25:14.214Z"
-  },
-  "createdAt": {
-    "$date": "2025-09-13T06:15:14.245Z"
-  },
-  "updatedAt": {
-    "$date": "2025-09-13T06:15:14.245Z"
-  }
-},
-{
-  "_id": {
-    "$oid": "68c5170162da66c07b04a97f"
-  },
-  "username": "khangnee",
-  "fullname": "khang ne",
-  "email": "baoichaudoi@gmail.com",
-  "password": "$2b$10$FzYmeywLrsoe6bIVAj8/ouroUbhg9/m2aJZU2QyqfE4CZ02pk/VCy",
-  "role": "buyer",
-  "action": "unlock",
-  "isVerified": false,
-  "otp": "266465",
-  "otpExpires": {
-    "$date": "2025-09-13T07:12:25.510Z"
-  },
-  "createdAt": {
-    "$date": "2025-09-13T07:02:25.533Z"
-  },
-  "updatedAt": {
-    "$date": "2025-09-13T15:13:20.133Z"
-  },
-  "avatarURL": "https://lh3.googleusercontent.com/a/ACg8ocK6aXDew0imC2xzAdRbD5XozFspXEaxpvZn4Cnr-5iVefe7l5I=s96-c",
-  "googleId": "101082476176044690684"
-},
-{
-  "_id": {
-    "$oid": "68c51956b6eb581e57ab06e2"
-  },
-  "username": "ducanh",
-  "fullname": "duc anh tran",
-  "email": "banghoangtu35@gmail.com",
-  "password": "$2b$10$0ZEFCibpGwQ1Zup.j2Iu/OIpzeOz9.xwjjVKJBs2OKKCIGjIRuxUC",
-  "role": "buyer",
-  "action": "unlock",
-  "isVerified": false,
-  "otp": "939314",
-  "otpExpires": {
-    "$date": "2025-09-13T07:22:22.492Z"
-  },
-  "createdAt": {
-    "$date": "2025-09-13T07:12:22.508Z"
-  },
-  "updatedAt": {
-    "$date": "2025-09-13T15:15:46.252Z"
-  },
-  "avatarURL": "https://lh3.googleusercontent.com/a/ACg8ocIR016mgEExQ42smtSJd5TuEWnemYoCRabHJWJeZsrUuZQeYqHv=s96-c",
-  "googleId": "105764419713740093263"
-},
-{
-  "_id": {
-    "$oid": "68c51c790ce9c1fca51c160b"
-  },
-  "username": "customer",
-  "fullname": "Customer",
-  "email": "duytspt009@gmail.com",
-  "password": "$2b$10$lmpfcmjDBzNN2IvYOG4mGuk5alITNlVY79Dyo9rZ9uDaEsM2tYT8y",
-  "role": "buyer",
-  "action": "unlock",
-  "isVerified": false,
-  "otp": "674913",
-  "otpExpires": {
-    "$date": "2025-09-13T07:35:45.632Z"
-  },
-  "createdAt": {
-    "$date": "2025-09-13T07:25:45.645Z"
-  },
-  "updatedAt": {
-    "$date": "2025-09-13T07:25:45.645Z"
-  }
-},
-{
-  "_id": {
-    "$oid": "68c51f01c477a0ca5b9be18d"
-  },
-  "username": "seller",
-  "fullname": "seller",
-  "email": "seller@gmail.com",
-  "password": "$2b$10$M2c0vMyayRTnx9ZseM0Tl.ImNsK7iC8eXF7qJyHmjTgxKJndQcksK",
-  "role": "seller",
-  "action": "unlock",
-  "isVerified": false,
-  "otp": "381568",
-  "otpExpires": {
-    "$date": "2025-09-13T07:46:33.414Z"
-  },
-  "createdAt": {
-    "$date": "2025-09-13T07:36:33.427Z"
-  },
-  "updatedAt": {
-    "$date": "2025-09-13T07:36:33.427Z"
-  }
-},
-{
-  "_id": {
-    "$oid": "68c52479562b012b3fe6ef84"
-  },
-  "username": "buyer1",
-  "fullname": "buyer1",
-  "email": "buyer@gmail.com",
-  "password": "$2b$10$M2c0vMyayRTnx9ZseM0Tl.ImNsK7iC8eXF7qJyHmjTgxKJndQcksK",
-  "role": "buyer",
-  "action": "unlock",
-  "isVerified": true,
-  "otp": null,
-  "otpExpires": null,
-  "createdAt": {
-    "$date": "2025-09-13T07:59:53.373Z"
-  },
-  "updatedAt": {
-    "$date": "2025-09-13T15:13:06.256Z"
-  },
-  "avatarURL": "https://lh3.googleusercontent.com/a/ACg8ocLb3g8c5HGibYCEQt_7Qmkup51b5Ro8Hj_46py4B77PuEhUuZQ=s96-c",
-  "googleId": "104013643318628747705"
-},
-{
-  "_id": {
-    "$oid": "68c52578562b012b3fe6efad"
-  },
-  "username": "admin1",
-  "fullname": "Admin",
-  "email": "admin@gmail.com",
-  "password": "$2b$10$M2c0vMyayRTnx9ZseM0Tl.ImNsK7iC8eXF7qJyHmjTgxKJndQcksK",
-  "role": "admin",
-  "action": "unlock",
-  "isVerified": true,
-  "otp": null,
-  "otpExpires": null,
-  "createdAt": {
-    "$date": "2025-09-13T08:04:08.055Z"
-  },
-  "updatedAt": {
-    "$date": "2025-09-16T08:58:08.859Z"
-  },
-  "avatarURL": "https://lh3.googleusercontent.com/a/ACg8ocINF04rzIgnFDh9D7v2bhgijL5wTkgovvlpDy9dPM-wT1pA4m7o=s96-c",
-  "googleId": "116349184075426206055"
-}]
+]

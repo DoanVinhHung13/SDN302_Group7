@@ -17,8 +17,8 @@ const listAllProducts = async (req, res) => {
       limit = 12,
     } = req.query;
 
-    // Base query
-    const query = { isAuction: true };
+    // Base query - lấy tất cả sản phẩm (không chỉ auction)
+    const query = {};
 
     // Filter by category
     if (categories) {
@@ -70,6 +70,8 @@ const listAllProducts = async (req, res) => {
       .skip(skip)
       .limit(Number(limit));
 
+    console.log(`Found ${products.length} products before filtering`);
+
     // Get all stores to filter by status
     const stores = await Store.find({});
     const storeMap = {};
@@ -93,7 +95,10 @@ const listAllProducts = async (req, res) => {
 
     // Filter out products from rejected stores and locked users
     const filteredProducts = products.filter(product => {
-      if (product.sellerId && product.sellerId.action === 'lock') return false;
+      if (product.sellerId && product.sellerId.action === 'lock') {
+        console.log(`Filtered out product ${product._id} - seller locked`);
+        return false;
+      }
 
       const sellerIdStr = product.sellerId
         ? product.sellerId._id.toString()
@@ -103,10 +108,13 @@ const listAllProducts = async (req, res) => {
         storeMap[sellerIdStr] &&
         storeMap[sellerIdStr].status === 'rejected'
       ) {
+        console.log(`Filtered out product ${product._id} - store rejected`);
         return false;
       }
       return true;
     });
+
+    console.log(`After filtering: ${filteredProducts.length} products`);
 
     // Add rating information to products
     const productsWithRatings = filteredProducts.map(product => {

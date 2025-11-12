@@ -168,7 +168,7 @@ const Home = () => {
     } else {
       setSelectedCategories([]);
     }
-    
+
     setCurrentPage(1);
   }, [location.search]);
 
@@ -176,10 +176,10 @@ const Home = () => {
     fetchCategories();
   }, []);
 
-  // Fetch products when category, page, price changes
+  // Fetch products when category, page, price, sortOrder changes
   useEffect(() => {
     fetchProducts();
-  }, [selectedCategories, currentPage, minPrice, maxPrice]);
+  }, [selectedCategories, currentPage, minPrice, maxPrice, sortOrder]);
 
   // Reset page to 1 when filters change (nhưng không khi currentPage thay đổi)
   useEffect(() => {

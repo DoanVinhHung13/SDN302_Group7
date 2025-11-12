@@ -8,6 +8,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { logout } from "../../../features/auth/authSlice";
 import ebayLogo from "../../../assets/images/logo-ebay.jpg";
+import NotificationDropdown from "./NotificationDropdown";
+import { IoIosNotificationsOutline } from "react-icons/io";
 
 import {
   resetUserInfo,
@@ -310,6 +312,9 @@ const Header = () => {
                   </span>
                 )}
               </Link>
+              {/* THÊM COMPONENT THÔNG BÁO Ở ĐÂY */}
+              {isAuthenticated && <NotificationDropdown />}
+              {/* KẾT THÚC THÊM COMPONENT THÔNG BÁO */}
               {isAuthenticated && (
                 <Link
                   to="/chat"

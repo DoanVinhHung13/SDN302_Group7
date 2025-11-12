@@ -11,11 +11,16 @@ const chatRouter = require("./chatRouter");
 const chatbotController = require("../controllers/chatbotController");
 const userController = require("../controllers/userController");
 const imageRoutes = require("../routes/imageRoutes");
+// THÊM: Import Notification Router
+const notificationRouter = require("./notificationRouter");
+
 const { authMiddleware } = require("../middleware/auth.middleware");
 const passport = require("passport");
 
 router.use("/admin", adminRouter);
 router.use("/seller", sellerRouter);
+// THÊM: Route cho Thông báo
+router.use('/notifications', notificationRouter);
 
 // Routes cho đăng ký và xác thực email
 router.post("/register", authController.register); // Đăng ký

@@ -9,6 +9,7 @@ import {
 import Footer from "./components/home/Footer/Footer";
 import FooterBottom from "./components/home/Footer/FooterBottom";
 import Header from "./components/home/Header/Header";
+import Chatbot from "./components/Chatbot/Chatbot";
 
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
@@ -84,6 +85,7 @@ const Layout = () => {
       <Outlet />
       <Footer />
       <FooterBottom />
+      <Chatbot />
     </div>
   );
 };

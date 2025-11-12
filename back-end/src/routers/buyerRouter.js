@@ -10,6 +10,7 @@ const reviewController = require('../controllers/reviewController');
 const disputeController = require('../controllers/disputeController');
 const userController = require('../controllers/userController');
 const returnRequestController = require('../controllers/returnRequestController');
+const { orderLimiter, reviewLimiter } = require('../middleware/rateLimiter.middleware');
 const buyerRouter = express.Router();
 
 // Public routes for payment callbacks (không yêu cầu xác thực)
@@ -50,8 +51,8 @@ buyerRouter.get('/vouchers/code/:code', getVoucherByCode);
 // Quản lý đơn hàng - requires buyer role specifically
 const orderRoutes = express.Router();
 orderRoutes.use(isBuyer);
-orderRoutes.post('/', orderController.createOrder);
-orderRoutes.post('/paypal', orderController.createOrderWithPayPal); // API mới cho đặt hàng + PayPal
+orderRoutes.post('/', orderLimiter, orderController.createOrder);
+orderRoutes.post('/paypal', orderLimiter, orderController.createOrderWithPayPal); // API mới cho đặt hàng + PayPal
 orderRoutes.get('/', orderController.getBuyerOrders);
 orderRoutes.get('/:id', orderController.getOrderDetails);
 orderRoutes.put('/items/:id/status', orderController.updateOrderItemStatus);
@@ -67,7 +68,7 @@ buyerRouter.use('/payments', paymentRoutes);
 // Review routes - requires buyer role
 const reviewRoutes = express.Router();
 reviewRoutes.use(isBuyer);
-reviewRoutes.post('/', reviewController.createReview);
+reviewRoutes.post('/', reviewLimiter, reviewController.createReview);
 reviewRoutes.get('/', reviewController.getBuyerReviews);
 reviewRoutes.put('/:id', reviewController.updateReview);
 reviewRoutes.delete('/:id', reviewController.deleteReview);

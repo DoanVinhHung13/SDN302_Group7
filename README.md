@@ -26,6 +26,7 @@ Dự án E-commerce với các tính năng:
 - Rate limiting bảo vệ API
 
 ---
+![Uploading image.png…]()
 
 ## 💻 Yêu cầu hệ thống
 

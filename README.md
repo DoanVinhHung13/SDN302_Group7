@@ -280,35 +280,22 @@ Password: 123456123456
 1. Terminal hiển thị lệnh `npm install` trong thư mục `back-end`
 2. Terminal hiển thị quá trình cài đặt packages
 3. Terminal hiển thị "added X packages" khi hoàn thành
-
+!(<img width="1349" height="543" alt="Screenshot 2025-11-13 082103" src="https://github.com/user-attachments/assets/29d96303-3b25-4cc8-863f-55ee9eaebdfc" />
+)
 **Mô tả:** Chụp màn hình terminal khi đang cài đặt và sau khi hoàn thành.
 
 ### Bước 2: Cấu hình .env
 
 **Chụp ảnh:**
 1. File `.env` trong thư mục `back-end/` (ẩn các giá trị nhạy cảm)
-2. File `.env` trong thư mục `front-end/`
+!(<img width="1072" height="744" alt="Screenshot 2025-11-13 083626" src="https://github.com/user-attachments/assets/b47b7585-f17b-46b5-b4c5-91abe81870d2" />
+)
 
 **Mô tả:** Chụp màn hình các file `.env` (có thể blur các giá trị nhạy cảm như passwords, API keys).
 
-### Bước 3: Khởi động MongoDB
 
-**Chụp ảnh:**
-1. Terminal chạy lệnh `mongod`
-2. Console hiển thị "waiting for connections on port 27017"
 
-**Mô tả:** Chụp màn hình terminal khi MongoDB đã khởi động thành công.
-
-### Bước 4: Import dữ liệu
-
-**Chụp ảnh:**
-1. Terminal chạy `npm run import-data`
-2. Console hiển thị "Importing collection: users..."
-3. Console hiển thị "Import completed successfully"
-
-**Mô tả:** Chụp màn hình quá trình import dữ liệu.
-
-### Bước 5: Khởi động Backend
+### Bước 3: Khởi động Backend
 
 **Chụp ảnh:**
 1. Terminal chạy `npm start` trong `back-end/`
@@ -317,29 +304,32 @@ Password: 123456123456
    - "MongoDB connected successfully"
    - "Server is running at PORT 9999"
    - "WebSocket server is running"
+<img width="665" height="402" alt="Screenshot 2025-11-13 083855" src="https://github.com/user-attachments/assets/38f9a4b6-ae86-49ac-b11e-926c8cb05645" />
 
 **Mô tả:** Chụp màn hình terminal khi backend đã khởi động thành công.
 
-### Bước 6: Khởi động Frontend
+### Bước 4: Khởi động Frontend
 
 **Chụp ảnh:**
 1. Terminal chạy `npm start` trong `front-end/`
 2. Browser tự động mở `http://localhost:3000`
 3. Trang chủ hiển thị
+<img width="1642" height="879" alt="Screenshot 2025-11-13 084126" src="https://github.com/user-attachments/assets/8e2c1f65-fcdf-4a6f-8774-7e493bfe14f3" />
 
 **Mô tả:** Chụp màn hình browser khi frontend đã load xong.
 
-### Bước 7: Đăng nhập
+### Bước 5: Đăng nhập
 
 **Chụp ảnh:**
 1. Trang đăng nhập
 2. Điền email và password
 3. Click "Đăng nhập"
 4. Trang chủ sau khi đăng nhập thành công
+<img width="1445" height="880" alt="Screenshot 2025-11-13 084234" src="https://github.com/user-attachments/assets/4d3dfa3f-1699-4450-9355-febd4df8d9e5" />
 
 **Mô tả:** Chụp màn hình các bước đăng nhập.
 
-### Bước 8: Test các tính năng
+### Bước 6: Test các tính năng
 
 **Chụp ảnh các tính năng chính:**
 1. **Xem sản phẩm:** Danh sách sản phẩm, chi tiết sản phẩm
@@ -352,14 +342,7 @@ Password: 123456123456
 
 **Mô tả:** Chụp màn hình từng tính năng khi đang sử dụng.
 
-### Bước 9: Kiểm tra API
 
-**Chụp ảnh:**
-1. Postman hoặc Browser DevTools → Network tab
-2. Test API endpoint: `GET http://localhost:9999/api/products`
-3. Response JSON hiển thị danh sách sản phẩm
-
-**Mô tả:** Chụp màn hình kết quả API call.
 
 ---
 

@@ -7,6 +7,7 @@ const { initScheduler } = require("./src/config/scheduler");
 const http = require("http");
 const { initSocketServer } = require("./src/services/socketService");
 const passport = require("passport");
+const { generalLimiter } = require("./src/middleware/rateLimiter.middleware");
 require("./src/config/passport"); // load file config passport (GoogleStrategy)
 
 const app = express();
@@ -19,27 +20,30 @@ app.use(cors({
 app.use(express.json());
 app.use(passport.initialize());
 
+// Apply general rate limiting to all API routes
+app.use("/api", generalLimiter);
+
 // Add request logging middleware
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-  
+
   // Log request body for POST/PUT requests
   if (req.method === 'POST' || req.method === 'PUT') {
     console.log('Request body:', JSON.stringify(req.body));
   }
-  
+
   // Capture the original send
   const originalSend = res.send;
-  
+
   // Override send to log response
-  res.send = function(body) {
+  res.send = function (body) {
     console.log(`[${new Date().toISOString()}] Response ${res.statusCode} for ${req.url}`);
-    
+
     // Restore original send and call it
     res.send = originalSend;
     return res.send(body);
   };
-  
+
   next();
 });
 
@@ -61,12 +65,12 @@ app.use("/api", router);
 app.get('/', (req, res) => {
   const { paymentStatus } = req.query;
   const frontendUrl = process.env.CLIENT_URL || 'http://localhost:3000';
-  
+
   if (paymentStatus) {
     // Redirect to frontend with payment status
     return res.redirect(`${frontendUrl}?paymentStatus=${paymentStatus}`);
   }
-  
+
   // Default redirect to frontend
   res.redirect(frontendUrl);
 });
@@ -84,7 +88,7 @@ app.set('io', io);
 server.listen(PORT, () => {
   console.log(`Server is running at PORT ${PORT}`);
   console.log(`WebSocket server is running`);
-  
+
   // Initialize schedulers after server starts
   initScheduler();
 });

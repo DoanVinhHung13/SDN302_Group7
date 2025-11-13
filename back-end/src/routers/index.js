@@ -15,6 +15,12 @@ const imageRoutes = require("../routes/imageRoutes");
 const notificationRouter = require("./notificationRouter");
 
 const { authMiddleware } = require("../middleware/auth.middleware");
+const {
+  authLimiter,
+  otpLimiter,
+  passwordResetLimiter,
+  chatbotLimiter
+} = require("../middleware/rateLimiter.middleware");
 const passport = require("passport");
 
 router.use("/admin", adminRouter);
@@ -22,13 +28,13 @@ router.use("/seller", sellerRouter);
 // THÊM: Route cho Thông báo
 router.use('/notifications', notificationRouter);
 
-// Routes cho đăng ký và xác thực email
-router.post("/register", authController.register); // Đăng ký
-router.post("/verify-otp", authController.verifyOTP);
-router.post("/resend-otp", authController.resendOTP);     // (Tuỳ chọn) Gửi lại OTP nếu hết hạn
+// Routes cho đăng ký và xác thực email - áp dụng rate limiting nghiêm ngặt
+router.post("/register", authLimiter, authController.register); // Đăng ký
+router.post("/verify-otp", otpLimiter, authController.verifyOTP);
+router.post("/resend-otp", otpLimiter, authController.resendOTP);     // (Tuỳ chọn) Gửi lại OTP nếu hết hạn
 
-// Routes đăng nhập và quên mật khẩu
-router.post("/login", authController.login);
+// Routes đăng nhập và quên mật khẩu - áp dụng rate limiting nghiêm ngặt
+router.post("/login", authLimiter, authController.login);
 
 // Google Login
 router.get(
@@ -44,7 +50,7 @@ router.get(
 );
 
 
-router.post("/forgot-password", authController.forgotPassword); // Quên mật khẩu
+router.post("/forgot-password", passwordResetLimiter, authController.forgotPassword); // Quên mật khẩu
 
 // User profile routes
 router.get("/profile", authMiddleware, authController.getProfile);
@@ -59,14 +65,14 @@ router.use("/buyers", buyerRouter);
 router.use("/chat", chatRouter);
 router.use("/images", authMiddleware, imageRoutes);
 // Chatbot AI routes - có thể dùng với hoặc không có auth (optional middleware)
-router.post("/chatbot/chat", (req, res, next) => {
+router.post("/chatbot/chat", chatbotLimiter, (req, res, next) => {
   // Optional auth - không bắt buộc đăng nhập
   if (req.headers.authorization) {
     return authMiddleware(req, res, next);
   }
   next();
 }, chatbotController.chatWithBot);
-router.post("/chatbot/clear", chatbotController.clearChatHistory);
+router.post("/chatbot/clear", chatbotLimiter, chatbotController.clearChatHistory);
 router.get('/products', productController.listAllProducts);
 router.get('/categories', categoryController.listAllCategories);
 // Public route for product reviews
